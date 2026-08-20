@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#f2724b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="초블리 수학">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>초블리 수학</title>
+<style>
+  :root{
+    --ink:#1b2430; --sub:#6b7684; --line:#e3e7ec; --bg:#f6f7f9;
+    --card:#fff; --kid:#f2724b; --ok:#17a06a; --new:#7c4dff; --soft:#f7f9fc;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;
+    display:flex;flex-direction:column;
+    padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);
+    overscroll-behavior:none;
+  }
+  .bar{
+    padding:13px 15px;background:var(--card);border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:9px;flex:0 0 auto;
+  }
+  .bar .back{border:0;background:transparent;font-size:19px;color:var(--sub);padding:0 3px;cursor:pointer;font-family:inherit}
+  .bar .t{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar .count{margin-left:auto;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums;flex:0 0 auto}
+  .wrap{flex:1;overflow-y:auto;padding:15px;-webkit-overflow-scrolling:touch}
+
+  .btn{
+    display:block;width:100%;border:0;border-radius:13px;padding:15px;
+    font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:9px;
+  }
+  .btn:active{transform:scale(.985)}
+  .btn.kid{background:var(--kid);color:#fff}
+  .btn.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+  .btn.ok{background:var(--ok);color:#fff}
+  .btn:disabled{opacity:.45}
+  .row{display:flex;gap:8px}
+  .row .btn{margin-top:9px}
+
+  .label{font-size:11.5px;color:var(--sub);margin:18px 0 7px;letter-spacing:.03em}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:9px;cursor:pointer;line-height:1.8}
+  .card:active{background:#fafbfc}
+  .card .n{font-weight:700;font-size:14.5px}
+  .card .m{color:var(--sub);font-size:12px;margin-top:3px}
+  .card.fresh{border-color:var(--new);background:#f8f5ff}
+  .newtag{display:inline-block;font-size:10px;font-weight:800;color:#fff;background:var(--new);padding:2px 7px;border-radius:20px;margin-left:6px;vertical-align:2px}
+
+  textarea{
+    width:100%;min-height:170px;border:1.5px dashed #c3ccd8;border-radius:12px;
+    padding:12px;font-size:13px;font-family:inherit;background:var(--card);
+    line-height:1.6;resize:none;color:var(--ink);
+  }
+  textarea:focus{outline:0;border-color:var(--kid)}
+
+  .note{border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.7;margin-top:11px}
+  .note.warn{background:#fff5e8;color:#8a5a12}
+  .note.good{background:#eaf7f0;color:#0f6d49}
+  .note.info{background:#f1eeff;color:#4a2fb0}
+  .note.bad{background:#fdeced;color:#a52334}
+
+  .prog{height:6px;border-radius:4px;background:#e9ecf0;overflow:hidden;margin-bottom:16px}
+  .prog i{display:block;height:100%;background:var(--kid);transition:width .3s}
+
+  .qtext{font-size:17px;line-height:2.15;font-weight:600;margin-bottom:4px;word-break:keep-all}
+
+  .ansbox{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:16px;display:flex;align-items:center;justify-content:center;
+    gap:6px;min-height:86px;flex-wrap:wrap;
+  }
+  .cell{
+    width:52px;height:50px;border:2px solid #c8d1dc;border-radius:9px;background:#fff;
+    text-align:center;font-size:21px;font-weight:700;font-family:inherit;color:var(--ink);
+    padding:0;
+  }
+  .cell:focus{outline:0;border-color:var(--kid)}
+  .cell.sm{width:46px;height:40px;font-size:18px}
+  .fracin{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .fracin .bar2{width:46px;height:2.5px;background:var(--ink);border-radius:2px}
+  .unit{font-size:17px;font-weight:700;color:var(--sub);margin-left:3px}
+  .dot{font-size:26px;font-weight:800;align-self:flex-end;padding-bottom:6px}
+
+  /* 세로 분수 (본문용) */
+  .fr{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;
+      vertical-align:middle;margin:0 3px;line-height:1;position:relative;top:-.08em}
+  .fr .up,.fr .dn{font-size:.74em;font-weight:700;line-height:1.15}
+  .fr .ln{width:100%;min-width:12px;height:1.4px;background:currentColor;margin:2px 0}
+
+  .steps{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:11px;font-size:14px;line-height:2.2}
+  .steps .st{margin-bottom:13px}
+  .steps .st:last-child{margin-bottom:0}
+  .steps .sh{font-weight:700;font-size:13.5px;color:var(--kid);margin-bottom:3px}
+  .steps .sd{color:#3c4653;font-size:13.5px;line-height:1.95}
+  .steps .sf{background:var(--soft);border-radius:8px;padding:9px 11px;margin-top:6px;font-size:14.5px;line-height:2.1;font-weight:600}
+  .steps .fin{border-top:1px dashed var(--line);padding-top:11px;font-weight:700;font-size:14.5px;line-height:2}
+
+  .big{font-size:26px;font-weight:800;text-align:center;margin:26px 0 6px}
+  .mid{text-align:center;color:var(--sub);font-size:14px;margin-bottom:6px}
+  .score{text-align:center;font-size:15px;font-weight:700;margin-bottom:20px}
+  .empty{text-align:center;color:var(--sub);font-size:13.5px;padding:40px 20px;line-height:1.9}
+  .hide{display:none!important}
+  .del{float:right;color:#c0c8d2;font-size:12px;padding:2px 6px}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <button class="back hide" id="backBtn">←</button>
+  <span class="t" id="title">초블리 수학</span>
+  <span class="count" id="count"></span>
+</div>
+<div class="wrap" id="wrap"></div>
+
+<script>
+"use strict";
+
+/* ---------- 저장 ---------- */
+var KEY = "chobly-math-sets-v1";
+var MAX_SETS = 5;
+
+function loadSets(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(!raw) return [];
+    var v = JSON.parse(raw);
+    return Array.isArray(v) ? v : [];
+  }catch(e){ return []; }
+}
+function saveSets(sets){
+  try{ localStorage.setItem(KEY, JSON.stringify(sets.slice(0, MAX_SETS))); }
+  catch(e){}
+}
+
+/* ---------- 압축 코드 해독 ---------- */
+/* 아빠 앱: JSON → deflate → base64 → "CHOB1:..." */
+function decodeCode(text){
+  var m = String(text).match(/CHOB1:([A-Za-z0-9+/=_-]+)/);
+  if(!m) throw new Error("형식이 아니에요");
+  var b64 = m[1].replace(/-/g,"+").replace(/_/g,"/");
+  while(b64.length % 4) b64 += "=";
+  var bin = atob(b64);
+  var bytes = new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+function inflateBytes(bytes){
+  if(typeof DecompressionStream === "undefined") return Promise.reject(new Error("미지원"));
+  var ds = new DecompressionStream("deflate-raw");
+  var stream = new Blob([bytes]).stream().pipeThrough(ds);
+  return new Response(stream).text();
+}
+function parseCode(text){
+  var bytes = decodeCode(text);
+  return inflateBytes(bytes).then(function(json){
+    var data = JSON.parse(json);
+    if(!data || !Array.isArray(data.q) || !data.q.length) throw new Error("문제가 없어요");
+    return data;
+  });
+}
+
+/* ---------- 분수/수식 표기 ---------- */
+/* 3/4 → 세로분수, 2_1/3 → 대분수 */
+function fracHTML(text){
+  var s = esc(String(text == null ? "" : text));
+  // 대분수(2_1/3)와 진분수(3/4)를 한 번에 처리한다.
+  // 두 번 치환하면 앞서 만든 결과 안의 숫자를 다시 잡아먹으므로 반드시 한 패스로.
+  return s.replace(/(\d+)_(\d+)\/(\d+)|(\d+)\/(\d+)/g, function(m, mw, mn, md, fn, fd){
+    if(mw !== undefined){
+      return mw + '<span class="fr"><span class="up">'+mn+'</span><i class="ln"></i><span class="dn">'+md+'</span></span>';
+    }
+    return '<span class="fr"><span class="up">'+fn+'</span><i class="ln"></i><span class="dn">'+fd+'</span></span>';
+  });
+}
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* ---------- 답 비교 ---------- */
+function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=b; b=a%b; a=t; } return a; }
+
+function answerValue(ans){
+  // ans: {type:"int"|"frac"|"mixed"|"dec", ...}
+  if(!ans) return null;
+  if(ans.type === "int") return Number(ans.value);
+  if(ans.type === "dec") return Number(ans.value);
+  if(ans.type === "frac"){
+    if(!Number(ans.den)) return null;
+    return Number(ans.num)/Number(ans.den);
+  }
+  if(ans.type === "mixed"){
+    if(!Number(ans.den)) return null;
+    return Number(ans.whole) + Number(ans.num)/Number(ans.den);
+  }
+  return null;
+}
+function sameAnswer(correct, input){
+  var a = answerValue(correct), b = answerValue(input);
+  if(a === null || b === null || isNaN(a) || isNaN(b)) return false;
+  return Math.abs(a-b) < 1e-9;
+}
+function answerText(ans){
+  if(!ans) return "";
+  var u = ans.unit ? " " + ans.unit : "";
+  if(ans.type === "int" || ans.type === "dec") return ans.value + u;
+  if(ans.type === "frac") return ans.num + "/" + ans.den + u;
+  if(ans.type === "mixed") return ans.whole + "_" + ans.num + "/" + ans.den + u;
+  return "";
+}
+
+/* ---------- 상태 ---------- */
+var sets = loadSets();
+var view = "home";      // home | paste | quiz | done
+var curSet = null;      // 현재 세트 객체
+var idx = 0;            // 문제 번호
+var tries = 0;          // 이 문제 시도 횟수
+var revealed = false;   // 풀이 열림
+var judged = null;      // null | "right" | "wrong"
+var onlyWrong = false;  // 틀린 문제만 다시 풀기 모드
+var order = [];         // 실제 풀 순서(인덱스 배열)
+
+var wrap = document.getElementById("wrap");
+var titleEl = document.getElementById("title");
+var countEl = document.getElementById("count");
+var backBtn = document.getElementById("backBtn");
+
+backBtn.onclick = function(){
+  if(view === "quiz" || view === "done" || view === "paste"){ go("home"); }
+};
+
+function go(v){
+  view = v;
+  if(v === "home"){ curSet = null; onlyWrong = false; }
+  render();
+  wrap.scrollTop = 0;
+}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  backBtn.classList.toggle("hide", view === "home");
+  countEl.textContent = "";
+  if(view === "home"){ titleEl.textContent = "초블리 수학"; renderHome(); }
+  else if(view === "paste"){ titleEl.textContent = "문제 불러오기"; renderPaste(); }
+  else if(view === "quiz"){ titleEl.textContent = curSet.title; renderQuiz(); }
+  else if(view === "done"){ titleEl.textContent = curSet.title; renderDone(); }
+}
+
+function renderHome(){
+  var h = '<button class="btn kid" id="toPaste">문제 불러오기</button>';
+  if(!sets.length){
+    h += '<div class="empty">아직 문제가 없어요.<br>아빠가 보내준 문제를 불러와 주세요.</div>';
+  }else{
+    h += '<div class="label">풀 수 있는 문제</div>';
+    sets.forEach(function(s,i){
+      var solved = (s.answers || []).filter(function(a){ return a !== null && a !== undefined; }).length;
+      var msg;
+      if(s.finished){
+        var right = countRight(s);
+        msg = s.q.length + "문제 · " + s.q.length + "개 중 " + right + "개 맞음";
+      }else if(solved > 0){
+        msg = s.q.length + "문제 · " + solved + "문제까지 풀었어요";
+      }else{
+        msg = s.q.length + "문제 · 아직 안 풀었어요";
+      }
+      h += '<div class="card'+(s.fresh?' fresh':'')+'" data-i="'+i+'">'
+         + '<span class="del" data-del="'+i+'">✕</span>'
+         + '<div class="n">'+esc(s.title)+(s.fresh?'<span class="newtag">NEW</span>':'')+'</div>'
+         + '<div class="m">'+msg+'</div></div>';
+    });
+    h += '<div class="note warn">문제는 최근 '+MAX_SETS+'개까지만 남아요.</div>';
+  }
+  wrap.innerHTML = h;
+
+  document.getElementById("toPaste").onclick = function(){ go("paste"); };
+  Array.prototype.forEach.call(wrap.querySelectorAll(".card"), function(el){
+    el.onclick = function(ev){
+      if(ev.target.hasAttribute("data-del")) return;
+      openSet(Number(el.getAttribute("data-i")));
+    };
+  });
+  Array.prototype.forEach.call(wrap.querySelectorAll("[data-del]"), function(el){
+    el.onclick = function(ev){
+      ev.stopPropagation();
+      var i = Number(el.getAttribute("data-del"));
+      if(confirm("이 문제를 지울까요?")){
+        sets.splice(i,1); saveSets(sets); render();
+      }
+    };
+  });
+}
+
+function countRight(s){
+  var n = 0;
+  (s.answers||[]).forEach(function(a,i){
+    if(a && a.correct) n++;
+  });
+  return n;
+}
+
+function renderPaste(){
+  wrap.innerHTML =
+    '<div class="note info">아빠가 카톡으로 보내준 문제를 길게 눌러 전체 선택하고 복사한 다음, 아래 칸에 붙여넣으세요.</div>'
+  + '<div class="label">여기에 붙여넣기</div>'
+  + '<textarea id="pasteArea" placeholder="CHOB1:..." autocomplete="off" autocorrect="off" spellcheck="false"></textarea>'
+  + '<div id="pasteMsg"></div>'
+  + '<button class="btn kid" id="doLoad">문제 가져오기</button>';
+
+  document.getElementById("doLoad").onclick = function(){
+    var txt = document.getElementById("pasteArea").value.trim();
+    var msg = document.getElementById("pasteMsg");
+    if(!txt){ msg.innerHTML = '<div class="note bad">붙여넣은 내용이 없어요.</div>'; return; }
+    msg.innerHTML = '<div class="note info">불러오는 중…</div>';
+    parseCode(txt).then(function(data){
+      var dup = sets.some(function(s){ return s.id === data.id; });
+      if(dup){ msg.innerHTML = '<div class="note warn">이미 갖고 있는 문제예요.</div>'; return; }
+      sets.forEach(function(s){ s.fresh = false; });
+      sets.unshift({
+        id: data.id || String(Date.now()),
+        title: data.title || "수학 문제",
+        q: data.q,
+        answers: new Array(data.q.length).fill(null),
+        finished: false,
+        fresh: true
+      });
+      sets = sets.slice(0, MAX_SETS);
+      saveSets(sets);
+      go("home");
+    }).catch(function(e){
+      msg.innerHTML = '<div class="note bad">문제 데이터가 아니에요. 카톡 내용을 처음부터 끝까지 모두 복사했는지 확인해 주세요.</div>';
+    });
+  };
+}
+
+function openSet(i){
+  curSet = sets[i];
+  curSet.fresh = false;
+  saveSets(sets);
+  onlyWrong = false;
+  order = curSet.q.map(function(_,k){ return k; });
+  // 안 푼 문제부터 이어서
+  var firstUnsolved = curSet.answers.findIndex(function(a){ return !a; });
+  idx = firstUnsolved === -1 ? 0 : firstUnsolved;
+  if(curSet.finished) idx = 0;
+  resetQ();
+  go("quiz");
+}
+
+function resetQ(){ tries = 0; revealed = false; judged = null; }
+
+/* ---------- 문제 화면 ---------- */
+function renderQuiz(){
+  var qi = order[idx];
+  var q = curSet.q[qi];
+  countEl.textContent = (idx+1) + " / " + order.length;
+
+  var pct = Math.round((idx / order.length) * 100);
+  var h = '<div class="prog"><i style="width:'+pct+'%"></i></div>';
+  h += '<div class="qtext">'+fracHTML(q.text)+'</div>';
+
+  if(judged === "right"){
+    h += '<div class="note good">정답이에요! 🎉</div>';
+  }else if(judged === "wrong" && tries >= 2){
+    h += '<div class="note bad">아쉬워요. 정답은 '+fracHTML(answerText(q.answer))+' 이에요.</div>';
+  }else if(judged === "wrong"){
+    h += '<div class="note warn">아쉬워요. 한 번 더 풀어볼까요?</div>';
+  }
+
+  h += '<div class="label">답을 써보세요</div>';
+  h += '<div class="ansbox">' + inputHTML(q.answer) + '</div>';
+
+  var done = (judged === "right") || (judged === "wrong" && tries >= 2);
+  if(!done){
+    h += '<button class="btn kid" id="check">'+(tries>0?'다시 확인':'정답 확인')+'</button>';
+    h += '<div class="row">'
+       + '<button class="btn ghost" id="showSol">풀이 보기</button>'
+       + '<button class="btn ghost" id="skip">건너뛰기</button></div>';
+  }else{
+    h += '<button class="btn kid" id="next">'+(idx+1 < order.length ? '다음 문제' : '결과 보기')+'</button>';
+    if(!revealed) h += '<button class="btn ghost" id="showSol">풀이 보기</button>';
+  }
+
+  if(revealed) h += solutionHTML(q);
+
+  wrap.innerHTML = h;
+
+  var chk = document.getElementById("check");
+  if(chk) chk.onclick = doCheck;
+  var nx = document.getElementById("next");
+  if(nx) nx.onclick = doNext;
+  var sk = document.getElementById("skip");
+  if(sk) sk.onclick = doSkip;
+  var ss = document.getElementById("showSol");
+  if(ss) ss.onclick = function(){ revealed = true; renderQuiz(); };
+
+  var first = wrap.querySelector(".cell:not([disabled])");
+  if(first && !done) first.focus();
+}
+
+function inputHTML(ans){
+  var t = ans.type;
+  var u = ans.unit ? '<span class="unit">'+esc(ans.unit)+'</span>' : '';
+  var dis = (judged === "right" || (judged === "wrong" && tries >= 2)) ? ' disabled' : '';
+  if(t === "int" || t === "dec"){
+    if(t === "int"){
+      return '<input class="cell" id="v1" type="tel" inputmode="numeric" maxlength="6"'+dis+'>'+u;
+    }
+    return '<input class="cell sm" id="v1" type="tel" inputmode="numeric" maxlength="4"'+dis+'>'
+         + '<span class="dot">.</span>'
+         + '<input class="cell sm" id="v2" type="tel" inputmode="numeric" maxlength="3"'+dis+'>'+u;
+  }
+  if(t === "frac"){
+    return '<div class="fracin">'
+         + '<input class="cell sm" id="v1" type="tel" inputmode="numeric" maxlength="4"'+dis+'>'
+         + '<i class="bar2"></i>'
+         + '<input class="cell sm" id="v2" type="tel" inputmode="numeric" maxlength="4"'+dis+'>'
+         + '</div>'+u;
+  }
+  // mixed
+  return '<input class="cell sm" id="v0" type="tel" inputmode="numeric" maxlength="3"'+dis+'>'
+       + '<div class="fracin">'
+       + '<input class="cell sm" id="v1" type="tel" inputmode="numeric" maxlength="4"'+dis+'>'
+       + '<i class="bar2"></i>'
+       + '<input class="cell sm" id="v2" type="tel" inputmode="numeric" maxlength="4"'+dis+'>'
+       + '</div>'+u;
+}
+
+function readInput(ans){
+  function val(id){
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  }
+  var t = ans.type;
+  if(t === "int"){
+    var a = val("v1"); if(a === "") return null;
+    return { type:"int", value:Number(a) };
+  }
+  if(t === "dec"){
+    var w = val("v1"), f = val("v2");
+    if(w === "" && f === "") return null;
+    return { type:"dec", value:Number((w||"0") + "." + (f||"0")) };
+  }
+  if(t === "frac"){
+    var n = val("v1"), d = val("v2");
+    if(n === "" || d === "" || Number(d) === 0) return null;
+    return { type:"frac", num:Number(n), den:Number(d) };
+  }
+  var wh = val("v0"), n2 = val("v1"), d2 = val("v2");
+  if(wh === "" || n2 === "" || d2 === "" || Number(d2) === 0) return null;
+  return { type:"mixed", whole:Number(wh), num:Number(n2), den:Number(d2) };
+}
+
+function doCheck(){
+  var qi = order[idx];
+  var q = curSet.q[qi];
+  var input = readInput(q.answer);
+  if(!input){
+    alert("답을 모두 써주세요.");
+    return;
+  }
+  tries++;
+  var right = sameAnswer(q.answer, input);
+  judged = right ? "right" : "wrong";
+  if(right || tries >= 2){
+    if(!onlyWrong){
+      curSet.answers[qi] = { correct: right, given: input };
+      saveSets(sets);
+    }
+    if(right) revealed = true;
+  }
+  renderQuiz();
+}
+
+function doSkip(){
+  var qi = order[idx];
+  if(!onlyWrong){
+    curSet.answers[qi] = { correct:false, skipped:true };
+    saveSets(sets);
+  }
+  doNext();
+}
+
+function doNext(){
+  if(idx + 1 < order.length){
+    idx++; resetQ(); renderQuiz(); wrap.scrollTop = 0;
+  }else{
+    if(!onlyWrong){ curSet.finished = true; saveSets(sets); }
+    go("done");
+  }
+}
+
+function solutionHTML(q){
+  var h = '<div class="label">풀이</div><div class="steps">';
+  (q.steps || []).forEach(function(s, i){
+    h += '<div class="st"><div class="sh">'+(i+1)+'. '+esc(s.title||"")+'</div>'
+       + '<div class="sd">'+fracHTML(s.desc||"")+'</div>';
+    if(s.math) h += '<div class="sf">'+fracHTML(s.math)+'</div>';
+    h += '</div>';
+  });
+  if(q.conclusion) h += '<div class="fin">'+fracHTML(q.conclusion)+'</div>';
+  h += '</div>';
+  return h;
+}
+
+/* ---------- 결과 화면 ---------- */
+function renderDone(){
+  var total = curSet.q.length;
+  var right = countRight(curSet);
+  var h = '<div class="big">다 풀었어요! 🎉</div>'
+        + '<div class="mid">'+total+'문제 중</div>'
+        + '<div class="score">'+right+'개 정답</div>';
+
+  var wrongIdx = [];
+  curSet.answers.forEach(function(a,i){ if(!a || !a.correct) wrongIdx.push(i); });
+
+  if(wrongIdx.length){
+    h += '<div class="label">틀린 문제</div>';
+    wrongIdx.forEach(function(i){
+      var q = curSet.q[i];
+      var a = curSet.answers[i];
+      var mine = (a && a.skipped) ? "건너뜀" : ("내 답 " + (a && a.given ? fracHTML(answerText(a.given)) : "-"));
+      var short = q.text.length > 40 ? q.text.slice(0,40) + "…" : q.text;
+      h += '<div class="card" style="cursor:default">'
+         + '<div class="n">'+(i+1)+'. '+fracHTML(short)+'</div>'
+         + '<div class="m">'+mine+' · 정답 '+fracHTML(answerText(q.answer))+'</div></div>';
+    });
+    h += '<button class="btn kid" id="retry">틀린 문제만 다시 풀기</button>';
+  }else{
+    h += '<div class="note good">전부 다 맞았어요! 정말 잘했어요 👏</div>';
+  }
+  h += '<button class="btn ghost" id="again">처음부터 다시 풀기</button>';
+  h += '<button class="btn ghost" id="home">목록으로</button>';
+  wrap.innerHTML = h;
+
+  var rt = document.getElementById("retry");
+  if(rt) rt.onclick = function(){
+    onlyWrong = true;
+    order = wrongIdx.slice();
+    idx = 0; resetQ(); go("quiz");
+  };
+  document.getElementById("again").onclick = function(){
+    onlyWrong = false;
+    curSet.answers = new Array(curSet.q.length).fill(null);
+    curSet.finished = false;
+    saveSets(sets);
+    order = curSet.q.map(function(_,k){ return k; });
+    idx = 0; resetQ(); go("quiz");
+  };
+  document.getElementById("home").onclick = function(){ go("home"); };
+}
+
+/* ---------- 시작 ---------- */
+render();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
