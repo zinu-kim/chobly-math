@@ -3,7 +3,7 @@ const Validator = {
   // "2 3/4" | "11/4" | "1.25" | "42"  ->  숫자
   toNumber(input) {
     if (input === null || input === undefined) return null;
-    const s = String(input).trim().replace(/\s+/g, ' ');
+    const s = String(input).trim().replace(/\s+/g, ' ').replace(/,/g, '');
     if (!s) return null;
 
     let m = s.match(/^(-?\d+)\s+(\d+)\/(\d+)$/);          // 대분수
@@ -46,7 +46,7 @@ const Validator = {
   // 분수/대분수를 {n, d} 로. 소수는 null.
   toFraction(input) {
     if (input === null || input === undefined) return null;
-    const s = String(input).trim().replace(/\s+/g, ' ');
+    const s = String(input).trim().replace(/\s+/g, ' ').replace(/,/g, '');
 
     let m = s.match(/^(-?\d+)\s+(\d+)\/(\d+)$/);
     if (m) {
