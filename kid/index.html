@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chobly Math - 초연이</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2196F3">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --primary: #2196F3;
+      --primary-dark: #1976D2;
+      --success: #4CAF50;
+      --error: #F44336;
+      --warning: #FF9800;
+      --neutral-bg: #F5F5F5;
+      --neutral-text: #333333;
+      --neutral-border: #DDDDDD;
+      --neutral-light: #EEEEEE;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+      color: var(--neutral-text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 24px 20px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 24px;
+      min-height: 400px;
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--neutral-light);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      transition: width 0.3s ease;
+    }
+
+    .home-screen,
+    .load-screen,
+    .quiz-screen,
+    .result-screen {
+      display: none;
+    }
+
+    .home-screen.active,
+    .load-screen.active,
+    .quiz-screen.active,
+    .result-screen.active {
+      display: block;
+    }
+
+    .home-content {
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .home-content h2 {
+      font-size: 20px;
+      margin-bottom: 24px;
+      color: var(--neutral-text);
+    }
+
+    .input-box {
+      margin-bottom: 16px;
+    }
+
+    .input-box label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    .input-box input[type="text"],
+    .input-box textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--neutral-border);
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .input-box textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .btn-primary:disabled {
+      background: #BDBDBD;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--neutral-light);
+    }
+
+    .question-card {
+      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid var(--primary);
+    }
+
+    .question-card h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .question-counter {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 12px;
+    }
+
+    .answer-input-group {
+      margin-bottom: 16px;
+    }
+
+    .answer-input-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .answer-input-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid var(--primary);
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .unit-label {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .feedback {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .feedback.correct {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border-left: 4px solid var(--success);
+    }
+
+    .feedback.incorrect {
+      background: #FFEBEE;
+      color: #C62828;
+      border-left: 4px solid var(--error);
+    }
+
+    .attempt-info {
+      font-size: 12px;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    .solution-box {
+      background: #FFF8E1;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 12px;
+      border-left: 4px solid var(--warning);
+      font-size: 13px;
+    }
+
+    .solution-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--warning);
+    }
+
+    .result-card {
+      text-align: center;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .result-score {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+    }
+
+    .result-message {
+      font-size: 16px;
+      color: var(--neutral-text);
+      margin-bottom: 20px;
+    }
+
+    .result-details {
+      text-align: left;
+      background: var(--neutral-light);
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+
+    .result-details p {
+      margin-bottom: 8px;
+    }
+
+    .result-details p:last-child {
+      margin-bottom: 0;
+    }
+
+    .message-box {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .message-info {
+      background: #E3F2FD;
+      color: #1565C0;
+      border-left: 4px solid var(--primary);
+    }
+
+    .message-success {
+      background: #E8F5E9;
+      color: #2E7D32;
+      border-left: 4px solid var(--success);
+    }
+
+    @media (max-width: 480px) {
+      .content {
+        padding: 16px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .button-group {
+        gap: 8px;
+      }
+
+      button {
+        padding: 10px 16px;
+        font-size: 13px;
+      }
+
+      .result-score {
+        font-size: 36px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎓 초연이의 수학 문제</h1>
+      <p>문제를 풀어봐요!</p>
+    </div>
+
+    <div class="content">
+      <!-- Home Screen -->
+      <div class="home-screen active">
+        <div class="home-content">
+          <h2>부모님이 만든 문제를 풀어봐요! 📝</h2>
+
+          <div class="input-box">
+            <label for="share-code-input">공유 코드</label>
+            <input type="text" id="share-code-input" placeholder="CHOBLY-1:...을 붙여넣기">
+          </div>
+
+          <div class="message-info">
+            💡 부모님이 보내준 공유 코드를 위에 붙여넣으세요
+          </div>
+
+          <div class="button-group" style="margin-top: 24px;">
+            <button class="btn-primary" id="btn-load-code" disabled>시작하기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Load Screen -->
+      <div class="load-screen">
+        <div style="text-align: center; padding: 40px 20px;">
+          <h2 style="font-size: 18px; margin-bottom: 20px;">문제를 불러오는 중...</h2>
+          <div style="font-size: 32px; margin-bottom: 20px;">⏳</div>
+          <p style="color: #666; font-size: 14px;">잠깐만 기다려주세요</p>
+        </div>
+      </div>
+
+      <!-- Quiz Screen -->
+      <div class="quiz-screen">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+
+        <div class="question-counter" id="question-counter"></div>
+
+        <div class="question-card">
+          <h3 id="question-text"></h3>
+        </div>
+
+        <div id="feedback-container"></div>
+
+        <div class="answer-input-group">
+          <label for="answer-input">답을 입력하세요<span class="unit-label" id="unit-label"></span></label>
+          <input type="text" id="answer-input" placeholder="답을 입력...">
+        </div>
+
+        <div class="attempt-info" id="attempt-info"></div>
+
+        <div class="button-group">
+          <button class="btn-primary" id="btn-check-answer">확인</button>
+        </div>
+
+        <div id="solution-container"></div>
+      </div>
+
+      <!-- Result Screen -->
+      <div class="result-screen">
+        <div class="result-card">
+          <div class="result-score" id="result-score"></div>
+          <div class="result-message" id="result-message"></div>
+        </div>
+
+        <div class="result-details" id="result-details"></div>
+
+        <div class="button-group">
+          <button class="btn-secondary" id="btn-new-quiz">다른 문제 풀기</button>
+          <button class="btn-primary" id="btn-home">홈</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/storage.js"></script>
+  <script src="../shared/validator.js"></script>
+  <script>
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.log('Service Worker registration failed:', err);
+      });
+    }
+  </script>
+  <script>
+    let currentProblems = [];
+    let currentIndex = 0;
+    let attemptCounts = {};
+    let correctCount = 0;
+
+    // Auto-enable load button when code is pasted
+    document.getElementById('share-code-input').addEventListener('input', (e) => {
+      document.getElementById('btn-load-code').disabled = !e.target.value.trim();
+    });
+
+    // Also enable on paste
+    document.getElementById('share-code-input').addEventListener('paste', (e) => {
+      setTimeout(() => {
+        document.getElementById('btn-load-code').disabled = !e.target.value.trim();
+      }, 0);
+    });
+
+    document.getElementById('btn-load-code').addEventListener('click', () => {
+      const code = document.getElementById('share-code-input').value.trim();
+      const data = Storage.decodeShareData(code);
+
+      if (data && data.problems) {
+        currentProblems = data.problems;
+        currentIndex = 0;
+        attemptCounts = {};
+        correctCount = 0;
+
+        showScreen('load');
+        setTimeout(() => {
+          showScreen('quiz');
+          displayQuestion();
+        }, 500);
+      } else {
+        alert('공유 코드가 유효하지 않습니다.');
+      }
+    });
+
+    function showScreen(screen) {
+      document.querySelectorAll('[class$="-screen"]').forEach(el => {
+        el.classList.remove('active');
+      });
+      document.querySelector(`.${screen}-screen`).classList.add('active');
+    }
+
+    function displayQuestion() {
+      const problem = currentProblems[currentIndex];
+      if (!problem) {
+        showResults();
+        return;
+      }
+
+      attemptCounts[currentIndex] = attemptCounts[currentIndex] || 0;
+
+      // Update progress
+      const progress = ((currentIndex + 1) / currentProblems.length) * 100;
+      document.getElementById('progress-fill').style.width = progress + '%';
+      document.getElementById('question-counter').textContent =
+        `${currentIndex + 1}번 / 총 ${currentProblems.length}번`;
+
+      // Display question
+      document.getElementById('question-text').textContent = problem.question;
+
+      // Display unit if exists
+      const unitLabel = document.getElementById('unit-label');
+      if (problem.unit) {
+        unitLabel.textContent = `(${problem.unit})`;
+      } else {
+        unitLabel.textContent = '';
+      }
+
+      // Clear input and feedback
+      document.getElementById('answer-input').value = '';
+      document.getElementById('feedback-container').innerHTML = '';
+      document.getElementById('solution-container').innerHTML = '';
+      document.getElementById('attempt-info').innerHTML = '';
+
+      // Update button state
+      document.getElementById('btn-check-answer').disabled = false;
+      document.getElementById('btn-check-answer').textContent = '확인';
+    }
+
+    document.getElementById('answer-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('btn-check-answer').click();
+      }
+    });
+
+    document.getElementById('btn-check-answer').addEventListener('click', () => {
+      const problem = currentProblems[currentIndex];
+      const userAnswer = document.getElementById('answer-input').value.trim();
+
+      if (!userAnswer) {
+        alert('답을 입력해주세요');
+        return;
+      }
+
+      const isCorrect = Validator.checkAnswer(
+        userAnswer,
+        problem.answer,
+        problem.type || 'integer'
+      );
+
+      const attempts = attemptCounts[currentIndex] + 1;
+      attemptCounts[currentIndex] = attempts;
+
+      const feedbackContainer = document.getElementById('feedback-container');
+
+      if (isCorrect) {
+        correctCount++;
+        const feedback = document.createElement('div');
+        feedback.className = 'feedback correct';
+        feedback.textContent = '⭐ 정답입니다! 잘했어요!';
+        feedbackContainer.innerHTML = '';
+        feedbackContainer.appendChild(feedback);
+
+        document.getElementById('btn-check-answer').textContent = '다음 문제';
+        document.getElementById('btn-check-answer').onclick = () => {
+          currentIndex++;
+          displayQuestion();
+        };
+      } else {
+        if (attempts >= 2) {
+          // Show solution
+          const feedback = document.createElement('div');
+          feedback.className = 'feedback incorrect';
+          feedback.textContent = '❌ 틀렸습니다.';
+          feedbackContainer.innerHTML = '';
+          feedbackContainer.appendChild(feedback);
+
+          const solution = document.createElement('div');
+          solution.className = 'solution-box';
+          solution.innerHTML = `<strong>풀이:</strong>${problem.explanation || '정답: ' + problem.answer + problem.unit}`;
+          document.getElementById('solution-container').innerHTML = '';
+          document.getElementById('solution-container').appendChild(solution);
+
+          document.getElementById('btn-check-answer').textContent = '다음 문제';
+          document.getElementById('btn-check-answer').onclick = () => {
+            currentIndex++;
+            displayQuestion();
+          };
+        } else {
+          const feedback = document.createElement('div');
+          feedback.className = 'feedback incorrect';
+          feedback.textContent = '❌ 틀렸습니다. 다시 시도해보세요!';
+          feedbackContainer.innerHTML = '';
+          feedbackContainer.appendChild(feedback);
+
+          const attemptInfo = document.createElement('div');
+          attemptInfo.className = 'attempt-info';
+          attemptInfo.textContent = '1회 더 시도할 수 있습니다';
+          document.getElementById('attempt-info').innerHTML = '';
+          document.getElementById('attempt-info').appendChild(attemptInfo);
+
+          document.getElementById('answer-input').value = '';
+          document.getElementById('answer-input').focus();
+        }
+      }
+    });
+
+    function showResults() {
+      const totalScore = Math.round((correctCount / currentProblems.length) * 100);
+      const resultScore = document.getElementById('result-score');
+      const resultMessage = document.getElementById('result-message');
+      const resultDetails = document.getElementById('result-details');
+
+      resultScore.textContent = totalScore + '%';
+
+      if (totalScore === 100) {
+        resultMessage.textContent = '완벽해요! 🎉';
+      } else if (totalScore >= 80) {
+        resultMessage.textContent = '잘했어요! 👏';
+      } else if (totalScore >= 60) {
+        resultMessage.textContent = '좋아요! 😊';
+      } else {
+        resultMessage.textContent = '다시 한 번 해봐요! 💪';
+      }
+
+      resultDetails.innerHTML = `
+        <p><strong>맞은 문제:</strong> ${correctCount} / ${currentProblems.length}</p>
+        <p><strong>점수:</strong> ${totalScore}%</p>
+        <p style="margin-top: 12px; font-size: 12px; color: #666;">다음에 또 도전해보세요!</p>
+      `;
+
+      showScreen('result');
+    }
+
+    document.getElementById('btn-new-quiz').addEventListener('click', () => {
+      document.getElementById('share-code-input').value = '';
+      document.getElementById('btn-load-code').disabled = true;
+      showScreen('home');
+    });
+
+    document.getElementById('btn-home').addEventListener('click', () => {
+      document.getElementById('share-code-input').value = '';
+      document.getElementById('btn-load-code').disabled = true;
+      showScreen('home');
+    });
+  </script>
+</body>
+</html>
