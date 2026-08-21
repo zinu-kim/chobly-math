@@ -1,34 +1,18 @@
 {
-  "name": "Chobly Math - 초연이",
-  "short_name": "Chobly Kid",
-  "description": "초연이 수학 문제 풀기 - 아이용",
-  "start_url": "/kid/",
-  "scope": "/kid/",
+  "name": "초연이의 수학문제",
+  "short_name": "수학문제",
+  "description": "아빠가 보내준 수학 문제를 풀어봅니다.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#2196F3",
+  "background_color": "#F2F4F3",
+  "theme_color": "#2B6CB0",
   "orientation": "portrait-primary",
+  "lang": "ko",
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
+    { "src": "../icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "../icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "../icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
-  "categories": ["education", "games"],
-  "screenshots": [
-    {
-      "src": "/icon-512.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow"
-    }
-  ]
+  "categories": ["education"]
 }

@@ -1,96 +1,75 @@
-// Answer validation and grading logic
+// 정답 판정 — 값만 맞으면 정답 (SPEC 4절)
 const Validator = {
-  // Check answer based on type
-  checkAnswer(userAnswer, correctAnswer, answerType) {
-    const sanitized = this.sanitizeAnswer(userAnswer, answerType);
-    const correct = this.sanitizeAnswer(correctAnswer, answerType);
+  // "2 3/4" | "11/4" | "1.25" | "42"  ->  숫자
+  toNumber(input) {
+    if (input === null || input === undefined) return null;
+    const s = String(input).trim().replace(/\s+/g, ' ');
+    if (!s) return null;
 
-    if (!sanitized || !correct) {
-      return false;
+    let m = s.match(/^(-?\d+)\s+(\d+)\/(\d+)$/);          // 대분수
+    if (m) {
+      const den = parseInt(m[3], 10);
+      if (den === 0) return null;
+      const w = parseInt(m[1], 10);
+      const frac = parseInt(m[2], 10) / den;
+      return w < 0 ? w - frac : w + frac;
     }
 
-    switch (answerType) {
-      case 'integer':
-        return sanitized === correct;
-
-      case 'decimal':
-        return Math.abs(parseFloat(sanitized) - parseFloat(correct)) < 0.0001;
-
-      case 'fraction':
-        return this.compareFractions(sanitized, correct);
-
-      case 'mixed':
-        // Accept both mixed number form and improper fraction form
-        return this.compareMixedOrFraction(sanitized, correct);
-
-      default:
-        return sanitized === correct;
-    }
-  },
-
-  sanitizeAnswer(answer, type) {
-    if (!answer || typeof answer !== 'string') return null;
-    answer = answer.trim();
-
-    switch (type) {
-      case 'integer':
-        return /^-?\d+$/.test(answer) ? answer : null;
-
-      case 'decimal':
-        return /^-?\d+(\.\d+)?$/.test(answer) ? answer : null;
-
-      case 'fraction':
-        return /^\d+\/\d+$/.test(answer) ? answer : null;
-
-      case 'mixed':
-        // Accept formats like "2 3/4" or improper "11/4"
-        return /^(\d+\s)?\d+\/\d+$/.test(answer) ? answer : null;
-
-      default:
-        return answer;
-    }
-  },
-
-  compareFractions(frac1, frac2) {
-    const [num1, den1] = frac1.split('/').map(Number);
-    const [num2, den2] = frac2.split('/').map(Number);
-
-    // Cross multiply: num1/den1 == num2/den2 if num1*den2 == num2*den1
-    return num1 * den2 === num2 * den1;
-  },
-
-  compareMixedOrFraction(mixed1, mixed2) {
-    const frac1 = this.toImproperFraction(mixed1);
-    const frac2 = this.toImproperFraction(mixed2);
-
-    if (!frac1 || !frac2) return false;
-    return this.compareFractions(frac1, frac2);
-  },
-
-  toImproperFraction(input) {
-    // Input can be "2 3/4" or "11/4"
-    const mixedMatch = input.match(/^(\d+)\s+(\d+)\/(\d+)$/);
-    if (mixedMatch) {
-      const whole = parseInt(mixedMatch[1]);
-      const num = parseInt(mixedMatch[2]);
-      const den = parseInt(mixedMatch[3]);
-      return `${whole * den + num}/${den}`;
+    m = s.match(/^(-?\d+)\/(\d+)$/);                       // 분수 (약분 안 해도 됨)
+    if (m) {
+      const den = parseInt(m[2], 10);
+      if (den === 0) return null;
+      return parseInt(m[1], 10) / den;
     }
 
-    const fracMatch = input.match(/^(\d+)\/(\d+)$/);
-    if (fracMatch) {
-      return input;
-    }
+    m = s.match(/^-?\d+(\.\d+)?$/);                        // 정수 / 소수
+    if (m) return parseFloat(s);
 
     return null;
   },
 
-  // Get next attempt limit message
-  getAttemptMessage(attempts, maxAttempts) {
-    if (attempts >= maxAttempts) {
-      return '더 이상 시도할 수 없습니다.';
+  // 초연이가 넣은 값과 정답을 비교한다.
+  // 표기 형태가 달라도(가분수/대분수/약분 전후/소수) 값이 같으면 정답.
+  checkAnswer(userAnswer, correctAnswer) {
+    const a = this.toNumber(userAnswer);
+    const b = this.toNumber(correctAnswer);
+    if (a === null || b === null) return false;
+
+    // 분수끼리는 곱셈으로 정확히 비교 (부동소수점 오차 회피)
+    const fa = this.toFraction(userAnswer);
+    const fb = this.toFraction(correctAnswer);
+    if (fa && fb) return fa.n * fb.d === fb.n * fa.d;
+
+    return Math.abs(a - b) < 1e-6;
+  },
+
+  // 분수/대분수를 {n, d} 로. 소수는 null.
+  toFraction(input) {
+    if (input === null || input === undefined) return null;
+    const s = String(input).trim().replace(/\s+/g, ' ');
+
+    let m = s.match(/^(-?\d+)\s+(\d+)\/(\d+)$/);
+    if (m) {
+      const w = parseInt(m[1], 10), n = parseInt(m[2], 10), d = parseInt(m[3], 10);
+      if (d === 0) return null;
+      const total = Math.abs(w) * d + n;
+      return { n: (w < 0 ? -total : total), d: d };
     }
-    const remaining = maxAttempts - attempts;
-    return `${remaining}회 남음`;
+
+    m = s.match(/^(-?\d+)\/(\d+)$/);
+    if (m) {
+      const d = parseInt(m[2], 10);
+      if (d === 0) return null;
+      return { n: parseInt(m[1], 10), d: d };
+    }
+
+    m = s.match(/^-?\d+$/);
+    if (m) return { n: parseInt(s, 10), d: 1 };
+
+    return null;
+  },
+
+  isBlank(v) {
+    return !v || !String(v).trim();
   }
 };

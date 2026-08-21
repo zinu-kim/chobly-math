@@ -1,0 +1,241 @@
+/* 초연이의 수학문제 생성기 — 공통 스타일
+   폴드6(접힘 ~360px / 펼침 ~900px)와 갤럭시S21(~360px) 기준.
+   가로 스크롤이 절대 생기지 않아야 한다. */
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+:root {
+  --accent: #2E7D5B;
+  --accent-strong: #1F5C42;
+  --accent-soft: #E6F2EC;
+
+  --ink: #1B1D1C;
+  --ink-soft: #5C635F;
+  --ink-faint: #8A918D;
+
+  --paper: #FFFFFF;
+  --ground: #F2F4F3;
+  --line: #DCE1DE;
+
+  --blue: #1565C0;
+  --blue-soft: #E3F0FC;
+  --red: #C0392B;
+  --red-soft: #FBEAE7;
+  --amber: #B26A00;
+  --amber-soft: #FDF0DC;
+
+  --radius: 10px;
+  --gap: 14px;
+
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent: #6DBF9B;
+    --accent-strong: #8FD4B6;
+    --accent-soft: #1B2A24;
+
+    --ink: #E8EBE9;
+    --ink-soft: #A8B0AC;
+    --ink-faint: #7C847F;
+
+    --paper: #1A1D1C;
+    --ground: #111312;
+    --line: #2E3432;
+
+    --blue: #7FB6EF;
+    --blue-soft: #14243A;
+    --red: #EF8B7E;
+    --red-soft: #33201D;
+    --amber: #E0A452;
+    --amber-soft: #2E2415;
+  }
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--ground);
+  color: var(--ink);
+  line-height: 1.55;
+  font-size: 16px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.wrap {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 14px 40px;
+}
+
+/* ---------- 헤더 ---------- */
+.top {
+  background: var(--accent);
+  color: #fff;
+  padding: 16px 14px;
+  margin-bottom: 18px;
+}
+.top-inner { max-width: 640px; margin: 0 auto; }
+.top h1 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+.top p { font-size: 12.5px; opacity: 0.85; margin-top: 2px; }
+
+/* ---------- 단계 표시 ---------- */
+.steps { display: flex; gap: 6px; margin-bottom: 20px; }
+.steps i {
+  flex: 1; height: 4px; border-radius: 2px;
+  background: var(--line); transition: background 0.2s;
+}
+.steps i.on { background: var(--accent); }
+.steps i.done { background: var(--accent); opacity: 0.45; }
+
+/* ---------- 카드 ---------- */
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: var(--gap);
+}
+h2.title {
+  font-size: 17px; font-weight: 700;
+  margin-bottom: 4px; letter-spacing: -0.01em;
+}
+p.sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 14px; }
+
+/* ---------- 알림 ---------- */
+.note {
+  border-radius: 8px; padding: 11px 13px;
+  font-size: 13.5px; margin-bottom: var(--gap);
+  border-left: 3px solid var(--blue);
+  background: var(--blue-soft); color: var(--ink);
+}
+.note.ok    { border-left-color: var(--accent); background: var(--accent-soft); }
+.note.warn  { border-left-color: var(--amber);  background: var(--amber-soft); }
+.note.bad   { border-left-color: var(--red);    background: var(--red-soft); }
+
+/* ---------- 버튼 ---------- */
+.btns { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+@media (min-width: 480px) { .btns.row { flex-direction: row; } .btns.row button { flex: 1; } }
+
+button {
+  font-family: inherit; font-size: 15px; font-weight: 600;
+  padding: 13px 16px; border-radius: 8px; border: 1.5px solid transparent;
+  cursor: pointer; width: 100%; min-height: 48px;
+  transition: filter 0.15s, opacity 0.15s;
+}
+button:active:not(:disabled) { filter: brightness(0.93); }
+.primary { background: var(--accent); color: #fff; }
+.ghost   { background: var(--paper); color: var(--accent); border-color: var(--accent); }
+.plain   { background: var(--paper); color: var(--ink-soft); border-color: var(--line); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+/* ---------- 폼 ---------- */
+label.field { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 7px; }
+input[type="file"], textarea, input[type="text"], select {
+  width: 100%; font-family: inherit; font-size: 15px;
+  padding: 11px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--paper); color: var(--ink);
+}
+textarea { resize: vertical; min-height: 110px; line-height: 1.5; }
+input[type="file"] { padding: 9px; font-size: 13.5px; }
+
+.check {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px; border: 1px solid var(--line); border-radius: 8px;
+  margin-bottom: 10px; cursor: pointer; background: var(--paper);
+}
+.check input { width: 20px; height: 20px; margin-top: 1px; flex: none; accent-color: var(--accent); }
+.check .t { font-size: 14px; font-weight: 600; }
+.check .d { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+.check > div { min-width: 0; }
+
+.seg { display: flex; gap: 8px; }
+.seg button {
+  flex: 1; font-size: 14px; padding: 10px 8px; min-height: 44px;
+  background: var(--paper); color: var(--ink-soft); border: 1.5px solid var(--line);
+}
+.seg button.on { background: var(--accent-soft); color: var(--accent-strong); border-color: var(--accent); }
+
+/* ---------- 사진 ---------- */
+.photo {
+  width: 100%; max-height: 300px; object-fit: contain;
+  border-radius: 8px; background: var(--ground); margin-top: 10px;
+  border: 1px solid var(--line); display: block;
+}
+
+/* ---------- 진행바 ---------- */
+.bar { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 10px; }
+.bar span { display: block; height: 100%; background: var(--accent); width: 0; transition: width 0.25s; }
+
+/* ---------- 분수 표시 (SPEC 5절) ---------- */
+.frac {
+  display: inline-grid; grid-template-rows: auto auto;
+  vertical-align: middle; text-align: center;
+  margin: 0 0.12em; font-variant-numeric: tabular-nums;
+}
+.frac-n { border-bottom: 1.6px solid currentColor; padding: 0 0.28em; line-height: 1.25; }
+.frac-d { padding: 0 0.28em; line-height: 1.25; }
+.mixed { display: inline-flex; align-items: center; gap: 0.16em; }
+.mixed-w { font-variant-numeric: tabular-nums; }
+.unit { color: var(--ink-soft); margin-left: 0.15em; }
+
+.qtext { font-size: 16.5px; line-height: 1.85; word-break: keep-all; }
+
+/* ---------- 정답 입력 위젯 (SPEC 5절) ---------- */
+.answer-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; flex-wrap: wrap; padding: 16px 0;
+}
+/* 공통 input 규칙(width:100%)보다 우선해야 하므로 선택자를 한 단계 더 준다 */
+.answer-row input.ans-box {
+  width: 66px; height: 54px; text-align: center;
+  font-size: 21px; font-weight: 600; font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  border: 2px solid var(--line); border-radius: 8px;
+  background: var(--paper); color: var(--ink); padding: 0;
+  flex: none;
+}
+.answer-row input.ans-box:focus { outline: none; border-color: var(--accent); }
+
+.frac-input { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; width: 66px; }
+.frac-bar { display: block; width: 100%; height: 2.5px; background: currentColor; border-radius: 2px; }
+.mixed-input { display: inline-flex; align-items: center; gap: 9px; }
+.dec-input { display: inline-flex; align-items: center; gap: 5px; }
+.dec-dot { font-size: 26px; font-weight: 700; line-height: 1; padding-bottom: 6px; }
+.unit-label { font-size: 17px; font-weight: 600; color: var(--ink-soft); }
+
+/* ---------- 목록 ---------- */
+.row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px; border: 1px solid var(--line); border-radius: 8px;
+  margin-bottom: 8px; background: var(--paper);
+}
+.row > .grow { flex: 1; min-width: 0; }
+.row .meta { font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
+.tag {
+  font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+  background: var(--blue); color: #fff; flex: none; letter-spacing: 0.02em;
+}
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; line-height: 1.6; word-break: break-all;
+  background: var(--ground); border: 1px solid var(--line);
+  border-radius: 8px; padding: 12px; max-height: 150px; overflow-y: auto;
+}
+.prompt-box {
+  background: var(--ground); border: 1px solid var(--line); border-radius: 8px;
+  padding: 12px; max-height: 220px; overflow-y: auto;
+  font-size: 12.5px; line-height: 1.65; white-space: pre-wrap; word-break: break-word;
+}
+
+.hide { display: none !important; }
+.center { text-align: center; }
+.muted { color: var(--ink-soft); font-size: 13px; }

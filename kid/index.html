@@ -1,643 +1,332 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chobly Math - 초연이</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2196F3">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --primary: #2196F3;
-      --primary-dark: #1976D2;
-      --success: #4CAF50;
-      --error: #F44336;
-      --warning: #FF9800;
-      --neutral-bg: #F5F5F5;
-      --neutral-text: #333333;
-      --neutral-border: #DDDDDD;
-      --neutral-light: #EEEEEE;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
-      color: var(--neutral-text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 600px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      overflow: hidden;
-    }
-
-    .header {
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-      color: white;
-      padding: 24px 20px;
-      text-align: center;
-    }
-
-    .header h1 {
-      font-size: 28px;
-      margin-bottom: 4px;
-      font-weight: 700;
-    }
-
-    .header p {
-      font-size: 13px;
-      opacity: 0.9;
-    }
-
-    .content {
-      padding: 24px;
-      min-height: 400px;
-    }
-
-    .progress-bar {
-      height: 6px;
-      background: var(--neutral-light);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-bottom: 24px;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: var(--primary);
-      transition: width 0.3s ease;
-    }
-
-    .home-screen,
-    .load-screen,
-    .quiz-screen,
-    .result-screen {
-      display: none;
-    }
-
-    .home-screen.active,
-    .load-screen.active,
-    .quiz-screen.active,
-    .result-screen.active {
-      display: block;
-    }
-
-    .home-content {
-      text-align: center;
-      padding: 20px 0;
-    }
-
-    .home-content h2 {
-      font-size: 20px;
-      margin-bottom: 24px;
-      color: var(--neutral-text);
-    }
-
-    .input-box {
-      margin-bottom: 16px;
-    }
-
-    .input-box label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 8px;
-      font-size: 14px;
-      text-align: left;
-    }
-
-    .input-box input[type="text"],
-    .input-box textarea {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid var(--neutral-border);
-      border-radius: 6px;
-      font-family: monospace;
-      font-size: 13px;
-    }
-
-    .input-box textarea {
-      min-height: 80px;
-      resize: vertical;
-    }
-
-    .button-group {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    button {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      flex: 1;
-      min-width: 120px;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: var(--primary-dark);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-    }
-
-    .btn-primary:disabled {
-      background: #BDBDBD;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .btn-secondary {
-      background: white;
-      color: var(--primary);
-      border: 2px solid var(--primary);
-    }
-
-    .btn-secondary:hover {
-      background: var(--neutral-light);
-    }
-
-    .question-card {
-      background: linear-gradient(135deg, #E3F2FD 0%, #F3E5F5 100%);
-      padding: 20px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      border-left: 4px solid var(--primary);
-    }
-
-    .question-card h3 {
-      font-size: 16px;
-      margin-bottom: 12px;
-      line-height: 1.5;
-    }
-
-    .question-counter {
-      font-size: 12px;
-      color: #666;
-      margin-bottom: 12px;
-    }
-
-    .answer-input-group {
-      margin-bottom: 16px;
-    }
-
-    .answer-input-group label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 8px;
-      font-size: 13px;
-    }
-
-    .answer-input-group input {
-      width: 100%;
-      padding: 12px;
-      border: 2px solid var(--primary);
-      border-radius: 6px;
-      font-size: 16px;
-      font-weight: 600;
-      text-align: center;
-    }
-
-    .unit-label {
-      display: inline-block;
-      margin-left: 8px;
-      font-size: 14px;
-      color: #666;
-    }
-
-    .feedback {
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      font-size: 13px;
-      text-align: center;
-    }
-
-    .feedback.correct {
-      background: #E8F5E9;
-      color: #2E7D32;
-      border-left: 4px solid var(--success);
-    }
-
-    .feedback.incorrect {
-      background: #FFEBEE;
-      color: #C62828;
-      border-left: 4px solid var(--error);
-    }
-
-    .attempt-info {
-      font-size: 12px;
-      color: #666;
-      margin-top: 8px;
-    }
-
-    .solution-box {
-      background: #FFF8E1;
-      padding: 12px;
-      border-radius: 6px;
-      margin-top: 12px;
-      border-left: 4px solid var(--warning);
-      font-size: 13px;
-    }
-
-    .solution-box strong {
-      display: block;
-      margin-bottom: 8px;
-      color: var(--warning);
-    }
-
-    .result-card {
-      text-align: center;
-      padding: 20px;
-      margin-bottom: 20px;
-    }
-
-    .result-score {
-      font-size: 48px;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 8px;
-    }
-
-    .result-message {
-      font-size: 16px;
-      color: var(--neutral-text);
-      margin-bottom: 20px;
-    }
-
-    .result-details {
-      text-align: left;
-      background: var(--neutral-light);
-      padding: 16px;
-      border-radius: 6px;
-      margin-bottom: 20px;
-      font-size: 13px;
-    }
-
-    .result-details p {
-      margin-bottom: 8px;
-    }
-
-    .result-details p:last-child {
-      margin-bottom: 0;
-    }
-
-    .message-box {
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      font-size: 13px;
-    }
-
-    .message-info {
-      background: #E3F2FD;
-      color: #1565C0;
-      border-left: 4px solid var(--primary);
-    }
-
-    .message-success {
-      background: #E8F5E9;
-      color: #2E7D32;
-      border-left: 4px solid var(--success);
-    }
-
-    @media (max-width: 480px) {
-      .content {
-        padding: 16px;
-      }
-
-      .header h1 {
-        font-size: 24px;
-      }
-
-      .button-group {
-        gap: 8px;
-      }
-
-      button {
-        padding: 10px 16px;
-        font-size: 13px;
-      }
-
-      .result-score {
-        font-size: 36px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>초연이의 수학문제</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2B6CB0">
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  :root { --accent: #2B6CB0; --accent-strong: #1F4F82; --accent-soft: #E6F0F9; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --accent: #7FB6EF; --accent-strong: #A5CDF6; --accent-soft: #16273B; }
+  }
+  .pane { display: none; }
+  .pane.on { display: block; }
+  .counter { font-size: 13px; font-weight: 700; color: var(--accent-strong); letter-spacing: 0.02em; }
+  .verdict { border-radius: 8px; padding: 13px; font-size: 15px; font-weight: 600; margin-top: 4px; }
+  .verdict.good { background: var(--accent-soft); color: var(--accent-strong); }
+  .verdict.retry { background: var(--amber-soft); color: var(--amber); }
+  .verdict.show { background: var(--red-soft); color: var(--red); }
+  .solution { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);
+              font-size: 14px; line-height: 1.85; color: var(--ink); }
+  .mark { font-size: 20px; font-weight: 700; flex: none; width: 26px; text-align: center; }
+  .mark.o { color: var(--accent); }
+  .mark.x { color: var(--red); }
+  .score { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🎓 초연이의 수학 문제</h1>
-      <p>문제를 풀어봐요!</p>
-    </div>
 
-    <div class="content">
-      <!-- Home Screen -->
-      <div class="home-screen active">
-        <div class="home-content">
-          <h2>부모님이 만든 문제를 풀어봐요! 📝</h2>
+<div class="top"><div class="top-inner">
+  <h1>초연이의 수학문제</h1>
+  <p id="topsub">아빠가 보내준 문제 풀기</p>
+</div></div>
 
-          <div class="input-box">
-            <label for="share-code-input">공유 코드</label>
-            <input type="text" id="share-code-input" placeholder="CHOBLY-1:...을 붙여넣기">
-          </div>
+<div class="wrap">
 
-          <div class="message-info">
-            💡 부모님이 보내준 공유 코드를 위에 붙여넣으세요
-          </div>
-
-          <div class="button-group" style="margin-top: 24px;">
-            <button class="btn-primary" id="btn-load-code" disabled>시작하기</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Load Screen -->
-      <div class="load-screen">
-        <div style="text-align: center; padding: 40px 20px;">
-          <h2 style="font-size: 18px; margin-bottom: 20px;">문제를 불러오는 중...</h2>
-          <div style="font-size: 32px; margin-bottom: 20px;">⏳</div>
-          <p style="color: #666; font-size: 14px;">잠깐만 기다려주세요</p>
-        </div>
-      </div>
-
-      <!-- Quiz Screen -->
-      <div class="quiz-screen">
-        <div class="progress-bar">
-          <div class="progress-fill" id="progress-fill"></div>
-        </div>
-
-        <div class="question-counter" id="question-counter"></div>
-
-        <div class="question-card">
-          <h3 id="question-text"></h3>
-        </div>
-
-        <div id="feedback-container"></div>
-
-        <div class="answer-input-group">
-          <label for="answer-input">답을 입력하세요<span class="unit-label" id="unit-label"></span></label>
-          <input type="text" id="answer-input" placeholder="답을 입력...">
-        </div>
-
-        <div class="attempt-info" id="attempt-info"></div>
-
-        <div class="button-group">
-          <button class="btn-primary" id="btn-check-answer">확인</button>
-        </div>
-
-        <div id="solution-container"></div>
-      </div>
-
-      <!-- Result Screen -->
-      <div class="result-screen">
-        <div class="result-card">
-          <div class="result-score" id="result-score"></div>
-          <div class="result-message" id="result-message"></div>
-        </div>
-
-        <div class="result-details" id="result-details"></div>
-
-        <div class="button-group">
-          <button class="btn-secondary" id="btn-new-quiz">다른 문제 풀기</button>
-          <button class="btn-primary" id="btn-home">홈</button>
-        </div>
+  <!-- ① 홈 -->
+  <section class="pane on" id="p1">
+    <div class="card">
+      <h2 class="title">안녕 초연아 👋</h2>
+      <p class="sub">아빠가 보내준 코드를 붙여넣으면 문제가 나와요.</p>
+      <div class="btns">
+        <button class="primary" id="toLoad">새 문제 불러오기</button>
       </div>
     </div>
-  </div>
 
-  <script src="../shared/storage.js"></script>
-  <script src="../shared/validator.js"></script>
-  <script>
-    // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(err => {
-        console.log('Service Worker registration failed:', err);
-      });
-    }
-  </script>
-  <script>
-    let currentProblems = [];
-    let currentIndex = 0;
-    let attemptCounts = {};
-    let correctCount = 0;
+    <div class="card">
+      <h2 class="title" style="font-size:15px">최근 문제</h2>
+      <div id="hist" style="margin-top:10px"></div>
+    </div>
+  </section>
 
-    // Auto-enable load button when code is pasted
-    document.getElementById('share-code-input').addEventListener('input', (e) => {
-      document.getElementById('btn-load-code').disabled = !e.target.value.trim();
+  <!-- ② 불러오기 -->
+  <section class="pane" id="p2">
+    <div class="card">
+      <h2 class="title">문제 불러오기</h2>
+      <p class="sub">아빠가 카톡으로 보낸 코드를 전체 복사해서 붙여넣으세요.</p>
+      <label class="field" for="code">문제 코드</label>
+      <textarea id="code" placeholder="CHOBLY-1: 로 시작하는 코드를 붙여넣으세요"></textarea>
+      <div id="loadErr"></div>
+      <div class="btns">
+        <button class="primary" id="doLoad" disabled>문제 가져오기</button>
+        <button class="plain" id="backHome">돌아가기</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ③ 문제 풀기 -->
+  <section class="pane" id="p3">
+    <div class="steps" id="dots"></div>
+
+    <div class="card">
+      <div class="counter" id="counter"></div>
+      <div class="qtext" id="q" style="margin-top:8px"></div>
+
+      <div id="answerArea"></div>
+
+      <div id="verdict"></div>
+      <div id="solution"></div>
+    </div>
+
+    <div class="btns">
+      <button class="primary" id="check">확인</button>
+      <button class="primary hide" id="next">다음 문제</button>
+      <button class="plain" id="quit">그만 풀기</button>
+    </div>
+  </section>
+
+  <!-- ④ 결과 -->
+  <section class="pane" id="p4">
+    <div class="card center">
+      <p class="sub" style="margin-bottom:6px">다 풀었어요!</p>
+      <div class="score" id="score"></div>
+      <p class="muted" id="scoreMsg" style="margin-top:6px"></p>
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:15px">푼 문제</h2>
+      <div id="review" style="margin-top:10px"></div>
+    </div>
+
+    <div class="btns">
+      <button class="primary hide" id="retryWrong">틀린 문제만 다시 풀기</button>
+      <button class="ghost" id="retryAll">처음부터 다시 풀기</button>
+      <button class="plain" id="toHome">홈으로</button>
+    </div>
+  </section>
+</div>
+
+<script src="../shared/mathfmt.js"></script>
+<script src="../shared/validator.js"></script>
+<script src="../shared/storage.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+const $ = id => document.getElementById(id);
+const MAX_TRY = 2;   // 첫 시도 + 다시 풀 기회 1번 (SPEC 3절)
+
+const run = { setId: null, problems: [], queue: [], pos: 0, tries: 0, results: {} };
+
+function show(n) {
+  for (let i = 1; i <= 4; i++) $('p' + i).classList.toggle('on', i === n);
+  window.scrollTo(0, 0);
+}
+
+/* ---------- ① 홈 ---------- */
+function renderHistory() {
+  const sets = Storage.getKidSets();
+  const box = $('hist');
+  if (!sets.length) { box.innerHTML = '<p class="muted">아직 받은 문제가 없어요.</p>'; return; }
+
+  box.innerHTML = '';
+  sets.forEach(s => {
+    const total = s.problems.length;
+    const right = s.problems.filter((_, i) => s.results[i] === 'correct').length;
+    const solved = Object.keys(s.results).length;
+    const d = new Date(s.createdAt);
+    const when = (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.cursor = 'pointer';
+    row.innerHTML =
+      '<div class="grow">' +
+        '<div style="font-size:14px;font-weight:600">' + total + '문제</div>' +
+        '<div class="meta">' + when + ' · ' +
+          (solved ? (right + '/' + total + ' 맞음') : '아직 안 풀었어요') +
+        '</div>' +
+      '</div>' +
+      (s.isNew ? '<span class="tag">NEW</span>' : '');
+
+    row.addEventListener('click', () => {
+      Storage.markRead(Storage.KID_KEY, s.id);
+      startSet(s.id, null);
     });
+    box.appendChild(row);
+  });
+}
 
-    // Also enable on paste
-    document.getElementById('share-code-input').addEventListener('paste', (e) => {
-      setTimeout(() => {
-        document.getElementById('btn-load-code').disabled = !e.target.value.trim();
-      }, 0);
-    });
+$('toLoad').addEventListener('click', () => {
+  $('code').value = '';
+  $('loadErr').innerHTML = '';
+  $('doLoad').disabled = true;
+  show(2);
+});
 
-    document.getElementById('btn-load-code').addEventListener('click', () => {
-      const code = document.getElementById('share-code-input').value.trim();
-      const data = Storage.decodeShareData(code);
+/* ---------- ② 불러오기 ---------- */
+$('code').addEventListener('input', () => {
+  $('doLoad').disabled = !$('code').value.trim();
+  $('loadErr').innerHTML = '';
+});
 
-      if (data && data.problems) {
-        currentProblems = data.problems;
-        currentIndex = 0;
-        attemptCounts = {};
-        correctCount = 0;
+$('backHome').addEventListener('click', () => { renderHistory(); show(1); });
 
-        showScreen('load');
-        setTimeout(() => {
-          showScreen('quiz');
-          displayQuestion();
-        }, 500);
-      } else {
-        alert('공유 코드가 유효하지 않습니다.');
-      }
-    });
+$('doLoad').addEventListener('click', () => {
+  const problems = Storage.decodeShareData($('code').value);
+  if (!problems) {
+    $('loadErr').innerHTML =
+      '<div class="note bad" style="margin:12px 0 0">코드를 읽지 못했어요. ' +
+      '아빠가 보낸 코드를 처음부터 끝까지 전부 복사했는지 확인해 주세요.</div>';
+    return;
+  }
+  const id = Storage.saveKidSet(problems);
+  Storage.markRead(Storage.KID_KEY, id);
+  startSet(id, null);
+});
 
-    function showScreen(screen) {
-      document.querySelectorAll('[class$="-screen"]').forEach(el => {
-        el.classList.remove('active');
-      });
-      document.querySelector(`.${screen}-screen`).classList.add('active');
-    }
+/* ---------- ③ 문제 풀기 ---------- */
+function startSet(setId, onlyIndexes) {
+  const set = Storage.getKidSet(setId);
+  if (!set) { renderHistory(); show(1); return; }
 
-    function displayQuestion() {
-      const problem = currentProblems[currentIndex];
-      if (!problem) {
-        showResults();
-        return;
-      }
+  run.setId = setId;
+  run.problems = set.problems;
+  run.results = Object.assign({}, set.results);
+  run.queue = onlyIndexes && onlyIndexes.length
+    ? onlyIndexes.slice()
+    : set.problems.map((_, i) => i);
+  run.pos = 0;
 
-      attemptCounts[currentIndex] = attemptCounts[currentIndex] || 0;
+  if (!onlyIndexes) run.results = {};
+  show(3);
+  renderQuestion();
+}
 
-      // Update progress
-      const progress = ((currentIndex + 1) / currentProblems.length) * 100;
-      document.getElementById('progress-fill').style.width = progress + '%';
-      document.getElementById('question-counter').textContent =
-        `${currentIndex + 1}번 / 총 ${currentProblems.length}번`;
+function renderQuestion() {
+  if (run.pos >= run.queue.length) { finish(); return; }
 
-      // Display question
-      document.getElementById('question-text').textContent = problem.question;
+  const idx = run.queue[run.pos];
+  const p = run.problems[idx];
+  run.tries = 0;
 
-      // Display unit if exists
-      const unitLabel = document.getElementById('unit-label');
-      if (problem.unit) {
-        unitLabel.textContent = `(${problem.unit})`;
-      } else {
-        unitLabel.textContent = '';
-      }
+  // 진행 점
+  $('dots').innerHTML = run.queue.map((_, i) =>
+    '<i class="' + (i < run.pos ? 'done' : (i === run.pos ? 'on' : '')) + '"></i>').join('');
 
-      // Clear input and feedback
-      document.getElementById('answer-input').value = '';
-      document.getElementById('feedback-container').innerHTML = '';
-      document.getElementById('solution-container').innerHTML = '';
-      document.getElementById('attempt-info').innerHTML = '';
+  $('counter').textContent = (run.pos + 1) + ' / ' + run.queue.length + '번 문제';
+  $('q').innerHTML = MathFmt.renderText(p.question);
+  $('answerArea').innerHTML = MathFmt.buildInput(p.type, p.unit);
+  $('verdict').innerHTML = '';
+  $('solution').innerHTML = '';
 
-      // Update button state
-      document.getElementById('btn-check-answer').disabled = false;
-      document.getElementById('btn-check-answer').textContent = '확인';
-    }
+  $('check').classList.remove('hide');
+  $('check').disabled = false;
+  $('next').classList.add('hide');
+  MathFmt.focusFirst($('answerArea'));
+}
 
-    document.getElementById('answer-input').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('btn-check-answer').click();
-      }
-    });
+$('check').addEventListener('click', () => {
+  const idx = run.queue[run.pos];
+  const p = run.problems[idx];
+  const given = MathFmt.readInput($('answerArea'), p.type);
 
-    document.getElementById('btn-check-answer').addEventListener('click', () => {
-      const problem = currentProblems[currentIndex];
-      const userAnswer = document.getElementById('answer-input').value.trim();
+  if (Validator.isBlank(given)) {
+    $('verdict').innerHTML = '<div class="verdict retry">답을 먼저 써 주세요.</div>';
+    return;
+  }
 
-      if (!userAnswer) {
-        alert('답을 입력해주세요');
-        return;
-      }
+  run.tries++;
+  const ok = Validator.checkAnswer(given, p.answer);
 
-      const isCorrect = Validator.checkAnswer(
-        userAnswer,
-        problem.answer,
-        problem.type || 'integer'
-      );
+  if (ok) {
+    $('verdict').innerHTML = '<div class="verdict good">잘했어요! 정답이에요 🎉</div>';
+    record(idx, 'correct');
+    toNext();
+    return;
+  }
 
-      const attempts = attemptCounts[currentIndex] + 1;
-      attemptCounts[currentIndex] = attempts;
+  if (run.tries < MAX_TRY) {
+    // 다시 풀 기회 1번 (SPEC 3절)
+    $('verdict').innerHTML =
+      '<div class="verdict retry">아쉬워요. 한 번 더 풀어볼까요?</div>';
+    MathFmt.clearInput($('answerArea'));
+    MathFmt.focusFirst($('answerArea'));
+    return;
+  }
 
-      const feedbackContainer = document.getElementById('feedback-container');
+  // 두 번 틀리면 정답과 풀이를 보여준다 (SPEC 3절)
+  $('verdict').innerHTML =
+    '<div class="verdict show">정답은 ' + MathFmt.renderAnswer(p.answer, p.unit) + ' 이에요.</div>';
+  $('solution').innerHTML = p.explanation
+    ? '<div class="solution"><b>풀이</b><br>' + MathFmt.renderText(p.explanation) + '</div>'
+    : '<div class="solution muted">이 문제는 풀이가 없어요.</div>';
+  record(idx, 'wrong');
+  toNext();
+});
 
-      if (isCorrect) {
-        correctCount++;
-        const feedback = document.createElement('div');
-        feedback.className = 'feedback correct';
-        feedback.textContent = '⭐ 정답입니다! 잘했어요!';
-        feedbackContainer.innerHTML = '';
-        feedbackContainer.appendChild(feedback);
+function record(idx, result) {
+  run.results[idx] = result;
+  Storage.saveKidResult(run.setId, idx, result);
+}
 
-        document.getElementById('btn-check-answer').textContent = '다음 문제';
-        document.getElementById('btn-check-answer').onclick = () => {
-          currentIndex++;
-          displayQuestion();
-        };
-      } else {
-        if (attempts >= 2) {
-          // Show solution
-          const feedback = document.createElement('div');
-          feedback.className = 'feedback incorrect';
-          feedback.textContent = '❌ 틀렸습니다.';
-          feedbackContainer.innerHTML = '';
-          feedbackContainer.appendChild(feedback);
+function toNext() {
+  $('check').classList.add('hide');
+  $('next').classList.remove('hide');
+  $('next').textContent = (run.pos + 1 >= run.queue.length) ? '결과 보기' : '다음 문제';
+}
 
-          const solution = document.createElement('div');
-          solution.className = 'solution-box';
-          solution.innerHTML = `<strong>풀이:</strong>${problem.explanation || '정답: ' + problem.answer + problem.unit}`;
-          document.getElementById('solution-container').innerHTML = '';
-          document.getElementById('solution-container').appendChild(solution);
+$('next').addEventListener('click', () => { run.pos++; renderQuestion(); });
+$('quit').addEventListener('click', () => { renderHistory(); show(1); });
 
-          document.getElementById('btn-check-answer').textContent = '다음 문제';
-          document.getElementById('btn-check-answer').onclick = () => {
-            currentIndex++;
-            displayQuestion();
-          };
-        } else {
-          const feedback = document.createElement('div');
-          feedback.className = 'feedback incorrect';
-          feedback.textContent = '❌ 틀렸습니다. 다시 시도해보세요!';
-          feedbackContainer.innerHTML = '';
-          feedbackContainer.appendChild(feedback);
+/* ---------- ④ 결과 ---------- */
+function finish() {
+  const total = run.queue.length;
+  const right = run.queue.filter(i => run.results[i] === 'correct').length;
 
-          const attemptInfo = document.createElement('div');
-          attemptInfo.className = 'attempt-info';
-          attemptInfo.textContent = '1회 더 시도할 수 있습니다';
-          document.getElementById('attempt-info').innerHTML = '';
-          document.getElementById('attempt-info').appendChild(attemptInfo);
+  $('score').textContent = right + ' / ' + total;
+  $('scoreMsg').textContent =
+    right === total ? '전부 맞았어요! 대단해요 🎉'
+    : right === 0   ? '괜찮아요. 풀이를 보고 다시 해봐요.'
+                    : '틀린 문제를 다시 풀어볼까요?';
 
-          document.getElementById('answer-input').value = '';
-          document.getElementById('answer-input').focus();
-        }
-      }
-    });
+  const box = $('review');
+  box.innerHTML = '';
+  run.queue.forEach((idx, i) => {
+    const p = run.problems[idx];
+    const ok = run.results[idx] === 'correct';
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML =
+      '<div class="mark ' + (ok ? 'o' : 'x') + '">' + (ok ? 'O' : 'X') + '</div>' +
+      '<div class="grow">' +
+        '<div style="font-size:13.5px;line-height:1.6">' +
+          MathFmt.renderText(p.question.length > 46 ? p.question.slice(0, 46) + '…' : p.question) +
+        '</div>' +
+        '<div class="meta">정답 ' + MathFmt.renderAnswer(p.answer, p.unit) + '</div>' +
+      '</div>';
+    box.appendChild(row);
+  });
 
-    function showResults() {
-      const totalScore = Math.round((correctCount / currentProblems.length) * 100);
-      const resultScore = document.getElementById('result-score');
-      const resultMessage = document.getElementById('result-message');
-      const resultDetails = document.getElementById('result-details');
+  const wrong = run.queue.filter(i => run.results[i] !== 'correct');
+  $('retryWrong').classList.toggle('hide', wrong.length === 0);
+  $('retryWrong').textContent = '틀린 ' + wrong.length + '문제만 다시 풀기';
 
-      resultScore.textContent = totalScore + '%';
+  show(4);
+}
 
-      if (totalScore === 100) {
-        resultMessage.textContent = '완벽해요! 🎉';
-      } else if (totalScore >= 80) {
-        resultMessage.textContent = '잘했어요! 👏';
-      } else if (totalScore >= 60) {
-        resultMessage.textContent = '좋아요! 😊';
-      } else {
-        resultMessage.textContent = '다시 한 번 해봐요! 💪';
-      }
+$('retryWrong').addEventListener('click', () => {
+  const wrong = run.queue.filter(i => run.results[i] !== 'correct');
+  startSet(run.setId, wrong);
+});
+$('retryAll').addEventListener('click', () => startSet(run.setId, null));
+$('toHome').addEventListener('click', () => { renderHistory(); show(1); });
 
-      resultDetails.innerHTML = `
-        <p><strong>맞은 문제:</strong> ${correctCount} / ${currentProblems.length}</p>
-        <p><strong>점수:</strong> ${totalScore}%</p>
-        <p style="margin-top: 12px; font-size: 12px; color: #666;">다음에 또 도전해보세요!</p>
-      `;
-
-      showScreen('result');
-    }
-
-    document.getElementById('btn-new-quiz').addEventListener('click', () => {
-      document.getElementById('share-code-input').value = '';
-      document.getElementById('btn-load-code').disabled = true;
-      showScreen('home');
-    });
-
-    document.getElementById('btn-home').addEventListener('click', () => {
-      document.getElementById('share-code-input').value = '';
-      document.getElementById('btn-load-code').disabled = true;
-      showScreen('home');
-    });
-  </script>
+renderHistory();
+</script>
 </body>
 </html>

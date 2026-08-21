@@ -1,621 +1,546 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chobly Math - 부모</title>
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4CAF50">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    :root {
-      --primary: #4CAF50;
-      --primary-dark: #388E3C;
-      --secondary: #2196F3;
-      --error: #F44336;
-      --warning: #FF9800;
-      --success: #4CAF50;
-      --neutral-bg: #F5F5F5;
-      --neutral-text: #333333;
-      --neutral-border: #DDDDDD;
-      --neutral-light: #EEEEEE;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--neutral-bg);
-      color: var(--neutral-text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 16px;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 600px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-    }
-
-    .header {
-      background: var(--primary);
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .header h1 {
-      font-size: 24px;
-      margin-bottom: 4px;
-    }
-
-    .header p {
-      font-size: 12px;
-      opacity: 0.9;
-    }
-
-    .content {
-      padding: 24px;
-      min-height: 400px;
-    }
-
-    .step-indicator {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      gap: 8px;
-    }
-
-    .step {
-      flex: 1;
-      height: 4px;
-      background: var(--neutral-light);
-      border-radius: 2px;
-    }
-
-    .step.active {
-      background: var(--primary);
-    }
-
-    .step.completed {
-      background: var(--success);
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
-    .form-group input[type="file"],
-    .form-group input[type="text"],
-    .form-group textarea {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--neutral-border);
-      border-radius: 6px;
-      font-family: inherit;
-      font-size: 14px;
-    }
-
-    .form-group textarea {
-      resize: vertical;
-      min-height: 80px;
-    }
-
-    .image-preview {
-      width: 100%;
-      max-height: 300px;
-      object-fit: contain;
-      border-radius: 6px;
-      margin-top: 8px;
-      background: var(--neutral-light);
-    }
-
-    .button-group {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-    }
-
-    button {
-      flex: 1;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: var(--primary-dark);
-    }
-
-    .btn-primary:disabled {
-      background: #BDBDBD;
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .btn-secondary {
-      background: white;
-      color: var(--primary);
-      border: 2px solid var(--primary);
-    }
-
-    .btn-secondary:hover {
-      background: var(--neutral-light);
-    }
-
-    .message-box {
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 16px;
-      font-size: 13px;
-    }
-
-    .message-info {
-      background: #E3F2FD;
-      color: #1565C0;
-      border-left: 4px solid var(--secondary);
-    }
-
-    .message-success {
-      background: #E8F5E9;
-      color: #2E7D32;
-      border-left: 4px solid var(--success);
-    }
-
-    .message-error {
-      background: #FFEBEE;
-      color: #C62828;
-      border-left: 4px solid var(--error);
-    }
-
-    .problem-list {
-      margin-top: 16px;
-    }
-
-    .problem-item {
-      padding: 12px;
-      background: var(--neutral-light);
-      border-radius: 6px;
-      margin-bottom: 8px;
-      font-size: 13px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .problem-item .new-badge {
-      background: var(--secondary);
-      color: white;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-
-    .step-1 { display: none; }
-    .step-1.active { display: block; }
-
-    .step-2 { display: none; }
-    .step-2.active { display: block; }
-
-    .step-3 { display: none; }
-    .step-3.active { display: block; }
-
-    .step-4 { display: none; }
-    .step-4.active { display: block; }
-
-    .step-5 { display: none; }
-    .step-5.active { display: block; }
-
-    @media (max-width: 480px) {
-      .content {
-        padding: 16px;
-      }
-
-      .button-group {
-        flex-direction: column;
-      }
-
-      button {
-        width: 100%;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>초연이의 수학문제 생성기 — 아빠</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2E7D5B">
+<link rel="stylesheet" href="../shared/style.css">
+<style>
+  :root { --accent: #2E7D5B; --accent-strong: #1F5C42; --accent-soft: #E6F2EC; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --accent: #6DBF9B; --accent-strong: #8FD4B6; --accent-soft: #1B2A24; }
+  }
+  .pane { display: none; }
+  .pane.on { display: block; }
+  .pick { display: flex; gap: 10px; padding: 13px; border: 1px solid var(--line);
+          border-radius: 8px; margin-bottom: 10px; background: var(--paper); }
+  .pick input { width: 20px; height: 20px; flex: none; margin-top: 2px; accent-color: var(--accent); }
+  .pick .body { flex: 1; min-width: 0; }
+  .pick .ans { font-size: 14px; margin-top: 7px; padding-top: 7px; border-top: 1px dashed var(--line); }
+  .pick .exp { font-size: 13px; color: var(--ink-soft); margin-top: 6px; line-height: 1.7; }
+  .qno { font-size: 12px; font-weight: 700; color: var(--accent-strong); margin-bottom: 3px; }
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>초연이의 수학 문제 생성</h1>
-      <p>부모용 앱</p>
-    </div>
 
-    <div class="content">
-      <div class="step-indicator">
-        <div class="step active" id="step-1-indicator"></div>
-        <div class="step" id="step-2-indicator"></div>
-        <div class="step" id="step-3-indicator"></div>
-        <div class="step" id="step-4-indicator"></div>
-        <div class="step" id="step-5-indicator"></div>
-      </div>
+<div class="top"><div class="top-inner">
+  <h1>초연이의 수학문제 생성기</h1>
+  <p>아빠 앱 · 문제 만들기</p>
+</div></div>
 
-      <!-- Step 1: Photo Upload -->
-      <div class="step-1 active">
-        <h2 style="margin-bottom: 16px;">1단계: 문제 사진 업로드</h2>
-
-        <div class="form-group">
-          <label for="photo-input">사진을 선택하세요</label>
-          <input type="file" id="photo-input" accept="image/*">
-          <div id="photo-preview-container"></div>
-        </div>
-
-        <div class="message-info">
-          📱 카메라나 갤러리에서 사진을 선택하세요
-        </div>
-
-        <div class="button-group">
-          <button class="btn-primary" id="btn-next-1" disabled>다음</button>
-        </div>
-      </div>
-
-      <!-- Step 2: Confirm Photo -->
-      <div class="step-2">
-        <h2 style="margin-bottom: 16px;">2단계: 사진 확인</h2>
-
-        <div style="text-align: center;">
-          <img id="confirm-photo" alt="확인용 사진" style="max-width: 100%; max-height: 300px; border-radius: 6px;">
-        </div>
-
-        <div class="message-info" style="margin-top: 16px;">
-          📋 사진이 명확한가요? 문제들이 잘 보이나요?
-        </div>
-
-        <div class="button-group">
-          <button class="btn-secondary" id="btn-back-2">다시 선택</button>
-          <button class="btn-primary" id="btn-next-2">확인</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Generate Problems -->
-      <div class="step-3">
-        <h2 style="margin-bottom: 16px;">3단계: Claude에 요청</h2>
-
-        <div class="message-info">
-          🤖 다음 프롬프트를 Claude에 복사하여 실행하세요:
-        </div>
-
-        <div style="background: var(--neutral-light); padding: 12px; border-radius: 6px; margin: 16px 0; font-family: monospace; font-size: 11px; max-height: 200px; overflow-y: auto;">
-          <div id="prompt-text"></div>
-        </div>
-
-        <button class="btn-secondary" id="btn-copy-prompt" style="margin-bottom: 12px; width: 100%;">📋 프롬프트 복사</button>
-
-        <div class="form-group">
-          <label for="ai-response">Claude의 응답을 붙여넣기</label>
-          <textarea id="ai-response" placeholder="Claude의 답변을 여기에 붙여넣으세요..."></textarea>
-        </div>
-
-        <div class="button-group">
-          <button class="btn-secondary" id="btn-back-3">뒤로</button>
-          <button class="btn-primary" id="btn-next-3" disabled>다음</button>
-        </div>
-      </div>
-
-      <!-- Step 4: Select Problems -->
-      <div class="step-4">
-        <h2 style="margin-bottom: 16px;">4단계: 문제 선택</h2>
-
-        <div class="message-info">
-          ✅ 초연이에게 보낼 문제를 선택하세요
-        </div>
-
-        <div id="problem-select-list" style="margin-top: 16px;"></div>
-
-        <div class="button-group">
-          <button class="btn-secondary" id="btn-back-4">뒤로</button>
-          <button class="btn-primary" id="btn-next-4" disabled>다음</button>
-        </div>
-      </div>
-
-      <!-- Step 5: Share Code -->
-      <div class="step-5">
-        <h2 style="margin-bottom: 16px;">5단계: 공유</h2>
-
-        <div class="message-success">
-          ✅ 공유 코드를 만들었습니다!
-        </div>
-
-        <div style="background: #E8F5E9; padding: 16px; border-radius: 6px; margin: 16px 0; text-align: center;">
-          <div style="font-size: 12px; color: #666; margin-bottom: 8px;">공유 코드</div>
-          <div id="share-code" style="font-family: monospace; font-size: 16px; font-weight: bold; word-break: break-all; color: var(--primary);"></div>
-        </div>
-
-        <button class="btn-secondary" id="btn-copy-code" style="margin-bottom: 12px; width: 100%;">📋 코드 복사</button>
-
-        <div class="message-info">
-          💬 이 코드를 초연이에게 카톡으로 보내거나 공유하세요
-        </div>
-
-        <div style="margin-top: 16px;">
-          <h3 style="font-size: 14px; margin-bottom: 8px;">최근 문제</h3>
-          <div id="recent-problems" class="problem-list"></div>
-        </div>
-
-        <div class="button-group">
-          <button class="btn-secondary" id="btn-new-problem" style="width: 100%;">새 문제 생성</button>
-        </div>
-      </div>
-    </div>
+<div class="wrap">
+  <div class="steps">
+    <i id="s1" class="on"></i><i id="s2"></i><i id="s3"></i><i id="s4"></i><i id="s5"></i>
   </div>
 
-  <script src="../shared/storage.js"></script>
-  <script src="../shared/validator.js"></script>
-  <script>
-    // Register service worker for PWA
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(err => {
-        console.log('Service Worker registration failed:', err);
-      });
-    }
-  </script>
-  <script>
-    let currentStep = 1;
-    let selectedPhoto = null;
-    let selectedProblems = [];
-    let generatedProblems = [];
+  <!-- ① 사진 넣기 -->
+  <section class="pane on" id="p1">
+    <div class="card">
+      <h2 class="title">1단계 · 사진 넣기</h2>
+      <p class="sub">초연이가 보낸 문제 사진을 고르세요.</p>
+      <label class="field" for="file">문제 사진</label>
+      <input type="file" id="file" accept="image/*">
+      <div id="preview"></div>
+    </div>
+    <div class="btns">
+      <button class="primary" id="go1" disabled>글자 인식하기</button>
+    </div>
+  </section>
 
-    function updateStepIndicator() {
-      for (let i = 1; i <= 5; i++) {
-        const indicator = document.getElementById(`step-${i}-indicator`);
-        if (i < currentStep) {
-          indicator.classList.add('completed');
-          indicator.classList.remove('active');
-        } else if (i === currentStep) {
-          indicator.classList.add('active');
-          indicator.classList.remove('completed');
-        } else {
-          indicator.classList.remove('active', 'completed');
-        }
-      }
-    }
+  <!-- ② 텍스트 확인 -->
+  <section class="pane" id="p2">
+    <div class="card">
+      <h2 class="title">2단계 · 텍스트 확인</h2>
+      <p class="sub">인식한 글자가 맞는지 확인하세요. 틀린 곳은 직접 고치면 됩니다.</p>
 
-    function showStep(step) {
-      document.querySelectorAll('[class*="step-"]').forEach(el => {
-        if (el.classList.contains(`step-${step}`)) {
-          el.classList.add('active');
-        } else if (el.classList.contains('step-') && el.classList.contains('active')) {
-          el.classList.remove('active');
-        }
-      });
-      currentStep = step;
-      updateStepIndicator();
-    }
+      <div id="ocr-run">
+        <div class="note">글자를 읽는 중입니다… <span id="ocr-pct">0%</span></div>
+        <div class="bar"><span id="ocr-bar"></span></div>
+        <p class="muted" style="margin-top:10px">처음 한 번은 한글 인식 데이터를 받느라 시간이 걸립니다. 다음부터는 빨라집니다.</p>
+      </div>
 
-    // Step 1: Photo Upload
-    document.getElementById('photo-input').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          selectedPhoto = event.target.result;
-          const preview = document.createElement('img');
-          preview.src = selectedPhoto;
-          preview.className = 'image-preview';
-          document.getElementById('photo-preview-container').innerHTML = '';
-          document.getElementById('photo-preview-container').appendChild(preview);
-          document.getElementById('btn-next-1').disabled = false;
-        };
-        reader.readAsDataURL(file);
-      }
-    });
+      <div id="ocr-done" class="hide">
+        <label class="field" for="text">인식된 문제 (직접 고칠 수 있습니다)</label>
+        <textarea id="text" placeholder="여기에 문제가 나옵니다"></textarea>
+        <div style="margin-top:14px">
+          <label class="field">이렇게 나갑니다</label>
+          <div class="card" style="margin:0;background:var(--ground)">
+            <div class="qtext" id="pv">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-    document.getElementById('btn-next-1').addEventListener('click', () => {
-      showStep(3);
-      generatePrompt();
-    });
+    <div class="btns">
+      <button class="primary" id="go2" disabled>맞습니다 · 다음으로</button>
+      <div class="btns row" style="margin-top:0">
+        <button class="ghost" id="again">다시 인식</button>
+        <button class="plain" id="back2">사진 다시 고르기</button>
+      </div>
+    </div>
+  </section>
 
-    // Step 2: Confirm Photo
-    document.getElementById('btn-back-2').addEventListener('click', () => {
-      showStep(1);
-    });
+  <!-- ③ 요청 만들기 -->
+  <section class="pane" id="p3">
+    <div class="card">
+      <h2 class="title">3단계 · 요청 만들기</h2>
+      <p class="sub">프롬프트를 복사해서 붙여넣고, 답변을 그대로 가져오세요.</p>
 
-    document.getElementById('btn-next-2').addEventListener('click', () => {
-      showStep(3);
-      generatePrompt();
-    });
+      <label class="check">
+        <input type="checkbox" id="withSol" checked>
+        <div>
+          <div class="t">풀이 포함해서 받기</div>
+          <div class="d">켜면 초연이 앱이 인터넷 없이도 풀이를 바로 띄웁니다.</div>
+        </div>
+      </label>
 
-    function generatePrompt() {
-      const prompt = `다음 사진을 분석하여 초등학교 5학년 수학 문제를 생성해주세요.
+      <label class="field" style="margin-top:14px">어디에 물어볼까요</label>
+      <div class="seg">
+        <button type="button" class="on" data-ai="claude">Claude</button>
+        <button type="button" data-ai="gpt">ChatGPT</button>
+      </div>
+    </div>
 
-[사진 분석 후]
-JSON 형식으로 정확히 5개의 새로운 비슷한 수준의 문제를 생성하세요.
-같은 풀이 구조이지만 물건의 양, 강수량, 생산량, 판매량, 독서량 등 다양한 소재로 변형된 문제들이어야 합니다.
+    <div class="card">
+      <label class="field">프롬프트</label>
+      <div class="prompt-box" id="prompt"></div>
+      <div class="btns">
+        <button class="primary" id="copyP">프롬프트 복사</button>
+        <button class="ghost" id="openAI">Claude 열기</button>
+      </div>
+    </div>
 
-응답 형식 (JSON만 제공):
-[
-  {
-    "question": "문제 텍스트",
-    "answer": "정답 (숫자만)",
-    "unit": "단위 (없으면 빈 문자열)",
-    "type": "integer|decimal|fraction|mixed",
-    "explanation": "풀이 과정"
+    <div class="card">
+      <label class="field" for="resp">받은 답변 붙여넣기</label>
+      <textarea id="resp" placeholder="AI가 준 답변을 그대로 붙여넣으세요"></textarea>
+      <div id="respErr"></div>
+    </div>
+
+    <div class="btns row">
+      <button class="plain" id="back3">뒤로</button>
+      <button class="primary" id="go3" disabled>문제 보기</button>
+    </div>
+  </section>
+
+  <!-- ④ 문제 고르기 -->
+  <section class="pane" id="p4">
+    <div class="card">
+      <h2 class="title">4단계 · 문제 고르기</h2>
+      <p class="sub">정답이 맞는지 눈으로 확인하고, 보낼 것만 고르세요.</p>
+      <div id="orig"></div>
+    </div>
+    <div id="list"></div>
+    <div class="btns row">
+      <button class="plain" id="back4">뒤로</button>
+      <button class="primary" id="go4">선택한 문제 내보내기</button>
+    </div>
+  </section>
+
+  <!-- ⑤ 내보내기 -->
+  <section class="pane" id="p5">
+    <div class="card">
+      <h2 class="title">5단계 · 내보내기</h2>
+      <p class="sub" id="sentCount"></p>
+      <div class="note ok">이 코드를 초연이에게 보내세요. 초연이는 전체 복사해서 앱에 붙여넣으면 됩니다.</div>
+      <div class="code" id="code"></div>
+      <div class="btns">
+        <button class="primary" id="send">카톡으로 보내기</button>
+        <button class="ghost" id="copyC">코드 복사</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:15px">최근 만든 문제</h2>
+      <div id="hist" style="margin-top:10px"></div>
+    </div>
+
+    <div class="btns">
+      <button class="plain" id="restart">새 문제 만들기</button>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="../shared/mathfmt.js"></script>
+<script src="../shared/validator.js"></script>
+<script src="../shared/storage.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+const $ = id => document.getElementById(id);
+const state = { photo: null, text: '', ai: 'claude', problems: [], original: null, picked: new Set() };
+
+/* ---------- 화면 이동 ---------- */
+function show(n) {
+  for (let i = 1; i <= 5; i++) {
+    $('p' + i).classList.toggle('on', i === n);
+    const dot = $('s' + i);
+    dot.className = i === n ? 'on' : (i < n ? 'done' : '');
   }
-]`;
+  window.scrollTo(0, 0);
+}
 
-      document.getElementById('prompt-text').textContent = prompt;
-    }
+/* ---------- ① 사진 ---------- */
+$('file').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    state.photo = ev.target.result;
+    $('preview').innerHTML = '<img class="photo" src="' + state.photo + '" alt="고른 사진">';
+    $('go1').disabled = false;
+  };
+  r.readAsDataURL(f);
+});
 
-    document.getElementById('btn-copy-prompt').addEventListener('click', () => {
-      const prompt = document.getElementById('prompt-text').textContent;
-      navigator.clipboard.writeText(prompt).then(() => {
-        alert('프롬프트가 복사되었습니다!');
-      });
-    });
+$('go1').addEventListener('click', () => { show(2); runOCR(); });
 
-    document.getElementById('ai-response').addEventListener('input', () => {
-      document.getElementById('btn-next-3').disabled =
-        !document.getElementById('ai-response').value.trim();
-    });
+/* ---------- ② OCR ---------- */
+// 대비를 올리고 크기를 줄이면 인식이 눈에 띄게 좋아진다.
+function prep(dataUrl) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const maxW = 1600;
+      const scale = img.width > maxW ? maxW / img.width : 1;
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, c.width, c.height);
 
-    // Step 3: Process AI Response
-    document.getElementById('btn-back-3').addEventListener('click', () => {
-      showStep(1);
-    });
+      const d = ctx.getImageData(0, 0, c.width, c.height);
+      const p = d.data;
+      for (let i = 0; i < p.length; i += 4) {
+        let g = 0.299 * p[i] + 0.587 * p[i + 1] + 0.114 * p[i + 2];
+        g = (g - 128) * 1.45 + 128;              // 대비
+        g = g < 0 ? 0 : (g > 255 ? 255 : g);
+        p[i] = p[i + 1] = p[i + 2] = g;
+      }
+      ctx.putImageData(d, 0, 0);
+      resolve(c.toDataURL('image/png'));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
 
-    document.getElementById('btn-next-3').addEventListener('click', () => {
-      const response = document.getElementById('ai-response').value;
-      try {
-        const match = response.match(/\[[\s\S]*\]/);
-        if (match) {
-          generatedProblems = JSON.parse(match[0]);
-          showStep(4);
-          displayProblemsForSelection();
-        } else {
-          alert('문제를 찾을 수 없습니다. 다시 확인해주세요.');
+async function runOCR() {
+  $('ocr-run').classList.remove('hide');
+  $('ocr-done').classList.add('hide');
+  $('go2').disabled = true;
+  $('ocr-bar').style.width = '0%';
+  $('ocr-pct').textContent = '0%';
+
+  try {
+    const img = await prep(state.photo);
+    const worker = await Tesseract.createWorker('kor+eng', 1, {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          const pct = Math.round(m.progress * 100);
+          $('ocr-bar').style.width = pct + '%';
+          $('ocr-pct').textContent = pct + '%';
+        } else if (m.status && m.status.indexOf('load') === 0) {
+          $('ocr-pct').textContent = '준비 중';
         }
-      } catch (e) {
-        alert('응답 형식이 잘못되었습니다.');
       }
     });
+    const res = await worker.recognize(img);
+    await worker.terminate();
 
-    function displayProblemsForSelection() {
-      const container = document.getElementById('problem-select-list');
-      container.innerHTML = '';
-
-      const updateSelectedProblems = () => {
-        selectedProblems = [];
-        for (let i = 0; i < generatedProblems.length; i++) {
-          const checkbox = document.getElementById(`problem-${i}`);
-          if (checkbox && checkbox.checked) {
-            selectedProblems.push(i);
-          }
-        }
-        document.getElementById('btn-next-4').disabled = selectedProblems.length === 0;
-      };
-
-      generatedProblems.forEach((problem, index) => {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = `problem-${index}`;
-        checkbox.checked = true;
-        checkbox.addEventListener('change', updateSelectedProblems);
-
-        const label = document.createElement('label');
-        label.htmlFor = `problem-${index}`;
-        label.style.marginLeft = '8px';
-        label.textContent = `${problem.question.substring(0, 50)}...`;
-
-        const item = document.createElement('div');
-        item.style.padding = '12px';
-        item.style.background = 'var(--neutral-light)';
-        item.style.borderRadius = '6px';
-        item.style.marginBottom = '8px';
-        item.style.display = 'flex';
-        item.style.alignItems = 'center';
-        item.appendChild(checkbox);
-        item.appendChild(label);
-
-        container.appendChild(item);
-      });
-
-      updateSelectedProblems();
+    let t = (res.data.text || '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    $('text').value = t;
+    $('ocr-run').classList.add('hide');
+    $('ocr-done').classList.remove('hide');
+    syncPreview();
+    if (!t) {
+      $('pv').innerHTML = '<span class="muted">글자를 읽지 못했습니다. 직접 입력하거나 사진을 다시 골라 주세요.</span>';
     }
+  } catch (err) {
+    $('ocr-run').innerHTML =
+      '<div class="note bad">글자 인식에 실패했습니다. 아래에 직접 입력하거나 사진을 다시 골라 주세요.</div>';
+    $('ocr-done').classList.remove('hide');
+    syncPreview();
+  }
+}
 
-    // Step 4: Select Problems
-    document.getElementById('btn-back-4').addEventListener('click', () => {
-      showStep(3);
-    });
+function syncPreview() {
+  const t = $('text').value.trim();
+  $('pv').innerHTML = t ? MathFmt.renderText(t) : '<span class="muted">—</span>';
+  $('go2').disabled = !t;
+}
+$('text').addEventListener('input', syncPreview);
+$('again').addEventListener('click', runOCR);
+$('back2').addEventListener('click', () => show(1));
 
-    document.getElementById('btn-next-4').addEventListener('click', () => {
-      const selected = selectedProblems.map(i => generatedProblems[i]);
-      const problemSet = {
-        problems: selected,
-        photoUrl: selectedPhoto
-      };
+$('go2').addEventListener('click', () => {
+  state.text = $('text').value.trim();
+  show(3);
+  buildPrompt();
+});
 
-      const shareData = {
-        version: 1,
-        problems: selected,
-        createdAt: new Date().toISOString()
-      };
+/* ---------- ③ 프롬프트 ---------- */
+document.querySelectorAll('.seg button').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.seg button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    state.ai = b.dataset.ai;
+    $('openAI').textContent = (state.ai === 'claude' ? 'Claude' : 'ChatGPT') + ' 열기';
+    buildPrompt();
+  });
+});
+$('withSol').addEventListener('change', buildPrompt);
 
-      const shareCode = Storage.encodeShareData(shareData);
-      document.getElementById('share-code').textContent = shareCode;
+function buildPrompt() {
+  const sol = $('withSol').checked;
 
-      Storage.saveParentProblemSet(problemSet);
-      showStep(5);
-      displayRecentProblems();
-    });
+  const schema = [
+    '{',
+    '  "original": { "answer": "원본 문제의 정답 값만", "unit": "단위(없으면 \\"\\")"' +
+      (sol ? ', "explanation": "원본 풀이"' : '') + ' },',
+    '  "problems": [',
+    '    {',
+    '      "question": "문제 텍스트. 분수는 3/4, 대분수는 2 3/4 처럼 쓰세요.",',
+    '      "answer": "정답 값만. 분수는 3/4, 대분수는 2 3/4, 소수는 1.25",',
+    '      "unit": "단위(없으면 \\"\\")",',
+    '      "type": "integer 또는 decimal 또는 fraction 또는 mixed"' +
+      (sol ? ',' : ''),
+    sol ? '      "explanation": "순서대로 설명하고 마지막은 \\"따라서 ~~~\\" 로 마무리"' : '',
+    '    }',
+    '  ]',
+    '}'
+  ].filter(Boolean).join('\n');
 
-    // Step 5: Share
-    document.getElementById('btn-copy-code').addEventListener('click', () => {
-      const code = document.getElementById('share-code').textContent;
-      navigator.clipboard.writeText(code).then(() => {
-        alert('공유 코드가 복사되었습니다!');
-      });
-    });
+  const p = [
+    '아래는 초등학교 5학년 수학 문제입니다.',
+    '',
+    '[원본 문제]',
+    state.text,
+    '',
+    '다음을 순서대로 해주세요.',
+    '',
+    '1) 원본 문제를 풀어서 정답을 구하세요.',
+    '',
+    '2) 원본과 같은 풀이 구조를 유지한 채, 소재만 바꾼 유사 문제를 정확히 5개 만드세요.',
+    '   - 소재를 다양하게 쓰세요. 예: 물건의 양, 강수량, 생산량, 판매량, 독서량, 이동 거리.',
+    '     원본이 점수와 평균이면 생성 문제는 다른 소재를 쓰세요.',
+    '   - 숫자도 조금씩 바꾸세요.',
+    '   - 묻는 방식과 풀이 순서는 그대로 두세요. 구조를 뒤집거나 조건을 더하지 마세요.',
+    '   - 난이도는 원본과 같게 하세요.',
+    '',
+    '3) 만든 문제 5개를 직접 풀어서 검산하세요.',
+    '   - 나누어떨어지지 않아 지저분한 소수가 나오면 숫자를 바꿔 다시 만드세요.',
+    '   - 소수점 2~3자리까지는 괜찮습니다. 정답이 정확한 것이 가장 중요합니다.',
+    '',
+    '4) 단위는 문제 서술에 맞춰 자연스럽게 쓰세요.',
+    '   예: 23000mL 보다 23L 가 자연스럽습니다. answer 에는 그 단위 기준의 값만 넣으세요.',
+    '',
+    '5) 도형 그림이 필요한 문제는 만들지 마세요.',
+    '',
+    sol ? '풀이도 함께 주세요.' : '풀이는 넣지 마세요.',
+    '',
+    '[출력 형식]',
+    state.ai === 'claude'
+      ? '아래 JSON만 출력하세요. 앞뒤에 설명이나 인사말을 붙이지 마세요.'
+      : '아래 JSON만 출력하세요. 코드블록 표시(```)나 설명 없이 JSON 자체만 주세요.',
+    schema
+  ].join('\n');
 
-    document.getElementById('btn-new-problem').addEventListener('click', () => {
-      currentStep = 1;
-      selectedPhoto = null;
-      selectedProblems = [];
-      generatedProblems = [];
-      document.getElementById('photo-input').value = '';
-      document.getElementById('photo-preview-container').innerHTML = '';
-      document.getElementById('ai-response').value = '';
-      document.getElementById('btn-next-1').disabled = true;
-      showStep(1);
-    });
+  $('prompt').textContent = p;
+}
 
-    function displayRecentProblems() {
-      const sets = Storage.getParentProblemSets();
-      const container = document.getElementById('recent-problems');
-      container.innerHTML = '';
+async function copy(text, btn, done) {
+  const old = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (e) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e2) {}
+    document.body.removeChild(ta);
+  }
+  btn.textContent = done;
+  setTimeout(() => { btn.textContent = old; }, 1500);
+}
 
-      sets.slice(0, 3).forEach(set => {
-        const item = document.createElement('div');
-        item.className = 'problem-item';
+$('copyP').addEventListener('click', e => copy($('prompt').textContent, e.target, '복사됐습니다'));
+$('openAI').addEventListener('click', () => {
+  window.open(state.ai === 'claude' ? 'https://claude.ai/new' : 'https://chatgpt.com/', '_blank');
+});
+$('back3').addEventListener('click', () => show(2));
 
-        const text = document.createElement('div');
-        text.textContent = `${set.problems.length}개 문제 생성됨`;
+/* ---------- 답변 파싱 ---------- */
+function parseResponse(raw) {
+  let t = String(raw || '').trim();
+  t = t.replace(/```(?:json)?/gi, '').trim();
 
-        const badge = document.createElement('div');
-        if (set.isNew) {
-          const newBadge = document.createElement('span');
-          newBadge.className = 'new-badge';
-          newBadge.textContent = 'NEW';
-          badge.appendChild(newBadge);
-        }
-
-        item.appendChild(text);
-        item.appendChild(badge);
-        container.appendChild(item);
-      });
+  let data = null;
+  const objStart = t.indexOf('{'), objEnd = t.lastIndexOf('}');
+  if (objStart !== -1 && objEnd > objStart) {
+    try { data = JSON.parse(t.slice(objStart, objEnd + 1)); } catch (e) {}
+  }
+  if (!data) {
+    const a = t.indexOf('['), b = t.lastIndexOf(']');
+    if (a !== -1 && b > a) {
+      try { data = { problems: JSON.parse(t.slice(a, b + 1)) }; } catch (e) {}
     }
-  </script>
+  }
+  if (!data) return null;
+
+  const list = Array.isArray(data) ? data : data.problems;
+  if (!Array.isArray(list) || !list.length) return null;
+
+  const problems = list.map(p => ({
+    question: String(p.question || '').trim(),
+    answer: p.answer == null ? '' : String(p.answer).trim(),
+    unit: String(p.unit || '').trim(),
+    type: ['integer', 'decimal', 'fraction', 'mixed'].indexOf(p.type) !== -1 ? p.type : 'integer',
+    explanation: String(p.explanation || '').trim()
+  })).filter(p => p.question && p.answer !== '');
+
+  if (!problems.length) return null;
+  return { problems: problems, original: (data && data.original) || null };
+}
+
+$('resp').addEventListener('input', () => {
+  const v = $('resp').value.trim();
+  $('go3').disabled = !v;
+  $('respErr').innerHTML = '';
+});
+
+$('go3').addEventListener('click', () => {
+  const parsed = parseResponse($('resp').value);
+  if (!parsed) {
+    $('respErr').innerHTML =
+      '<div class="note bad" style="margin:12px 0 0">문제를 읽지 못했습니다. ' +
+      'AI 답변을 처음부터 끝까지 다시 복사해서 붙여넣어 주세요.</div>';
+    return;
+  }
+  state.problems = parsed.problems;
+  state.original = parsed.original;
+  state.picked = new Set(state.problems.map((_, i) => i));
+  show(4);
+  renderPicks();
+});
+
+/* ---------- ④ 고르기 ---------- */
+function renderPicks() {
+  const o = state.original;
+  $('orig').innerHTML = o && o.answer
+    ? '<div class="note"><b>원본 문제 정답</b> — ' +
+        MathFmt.renderAnswer(o.answer, o.unit) +
+        (o.explanation ? '<div class="muted" style="margin-top:6px;line-height:1.7">' +
+          MathFmt.renderText(o.explanation) + '</div>' : '') +
+      '</div>'
+    : '<div class="note warn">원본 문제의 정답이 답변에 없습니다. 아래 문제들만 확인해 주세요.</div>';
+
+  const box = $('list');
+  box.innerHTML = '';
+  state.problems.forEach((p, i) => {
+    const el = document.createElement('label');
+    el.className = 'pick';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = state.picked.has(i);
+    cb.addEventListener('change', () => {
+      if (cb.checked) state.picked.add(i); else state.picked.delete(i);
+      updatePickBtn();
+    });
+
+    const body = document.createElement('div');
+    body.className = 'body';
+    body.innerHTML =
+      '<div class="qno">' + (i + 1) + '번</div>' +
+      '<div class="qtext" style="font-size:15px">' + MathFmt.renderText(p.question) + '</div>' +
+      '<div class="ans"><b>정답</b> ' + MathFmt.renderAnswer(p.answer, p.unit) + '</div>' +
+      (p.explanation ? '<div class="exp">' + MathFmt.renderText(p.explanation) + '</div>' : '');
+
+    el.appendChild(cb);
+    el.appendChild(body);
+    box.appendChild(el);
+  });
+  updatePickBtn();
+}
+
+function updatePickBtn() {
+  const n = state.picked.size;
+  $('go4').disabled = n === 0;
+  $('go4').textContent = n ? ('선택한 ' + n + '문제 내보내기') : '문제를 고르세요';
+}
+
+$('back4').addEventListener('click', () => show(3));
+
+$('go4').addEventListener('click', () => {
+  const chosen = Array.from(state.picked).sort((a, b) => a - b).map(i => state.problems[i]);
+  if (!chosen.length) return;
+
+  const code = Storage.encodeShareData(chosen);
+  $('code').textContent = code;
+  $('sentCount').textContent = chosen.length + '문제를 코드로 만들었습니다.';
+
+  Storage.saveParentSet({ count: chosen.length, sourceText: state.text, problems: chosen });
+  show(5);
+  renderHistory();
+});
+
+/* ---------- ⑤ 내보내기 ---------- */
+$('copyC').addEventListener('click', e => copy($('code').textContent, e.target, '복사됐습니다'));
+
+$('send').addEventListener('click', async e => {
+  const code = $('code').textContent;
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: '초연이 수학 문제', text: code });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+  }
+  copy(code, e.target, '복사됐습니다 · 카톡에 붙여넣으세요');
+});
+
+function renderHistory() {
+  const sets = Storage.getParentSets();
+  const box = $('hist');
+  if (!sets.length) { box.innerHTML = '<p class="muted">아직 없습니다.</p>'; return; }
+  box.innerHTML = '';
+  sets.forEach(s => {
+    const d = new Date(s.createdAt);
+    const when = (d.getMonth() + 1) + '월 ' + d.getDate() + '일 ' +
+                 String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML =
+      '<div class="grow"><div style="font-size:14px;font-weight:600">' +
+        (s.count || (s.problems ? s.problems.length : 0)) + '문제</div>' +
+      '<div class="meta">' + when + '</div></div>' +
+      (s.isNew ? '<span class="tag">NEW</span>' : '');
+    box.appendChild(row);
+  });
+}
+
+$('restart').addEventListener('click', () => {
+  Storage.getParentSets().forEach(s => Storage.markRead(Storage.PARENT_KEY, s.id));
+  state.photo = null; state.text = ''; state.problems = []; state.original = null; state.picked = new Set();
+  $('file').value = '';
+  $('preview').innerHTML = '';
+  $('text').value = '';
+  $('resp').value = '';
+  $('respErr').innerHTML = '';
+  $('go1').disabled = true;
+  $('go2').disabled = true;
+  $('go3').disabled = true;
+  show(1);
+});
+</script>
 </body>
 </html>
