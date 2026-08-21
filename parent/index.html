@@ -434,8 +434,8 @@
     });
 
     document.getElementById('btn-next-1').addEventListener('click', () => {
-      showStep(2);
-      document.getElementById('confirm-photo').src = selectedPhoto;
+      showStep(3);
+      generatePrompt();
     });
 
     // Step 2: Confirm Photo
@@ -511,14 +511,18 @@ JSON 형식으로 3-5개의 새로운 비슷한 수준의 문제를 생성하세
         checkbox.type = 'checkbox';
         checkbox.id = `problem-${index}`;
         checkbox.checked = true;
-        checkbox.addEventListener('change', (e) => {
-          if (e.target.checked) {
-            selectedProblems.push(index);
-          } else {
-            selectedProblems = selectedProblems.filter(i => i !== index);
-          }
+
+        const updateButton = () => {
+          selectedProblems = [];
+          generatedProblems.forEach((_, i) => {
+            if (document.getElementById(`problem-${i}`)?.checked) {
+              selectedProblems.push(i);
+            }
+          });
           document.getElementById('btn-next-4').disabled = selectedProblems.length === 0;
-        });
+        };
+
+        checkbox.addEventListener('change', updateButton);
 
         const label = document.createElement('label');
         label.htmlFor = `problem-${index}`;
@@ -536,10 +540,13 @@ JSON 형식으로 3-5개의 새로운 비슷한 수준의 문제를 생성하세
         item.appendChild(label);
 
         container.appendChild(item);
-        selectedProblems.push(index);
       });
 
-      document.getElementById('btn-next-4').disabled = selectedProblems.length === 0;
+      selectedProblems = [];
+      generatedProblems.forEach((_, index) => {
+        selectedProblems.push(index);
+      });
+      document.getElementById('btn-next-4').disabled = false;
     }
 
     // Step 4: Select Problems
