@@ -62,6 +62,9 @@
       </div>
 
       <div id="ocr-done" class="hide">
+        <label class="field">원본 사진</label>
+        <img id="photo-preview" src="" alt="원본 사진" style="width: 100%; border-radius: 8px; margin-bottom: 14px; max-height: 280px; object-fit: contain;">
+
         <label class="field" for="text">인식된 문제 (직접 고칠 수 있습니다)</label>
         <textarea id="text" placeholder="여기에 문제가 나옵니다"></textarea>
         <div style="margin-top:14px">
@@ -235,6 +238,7 @@ async function runOCR() {
   $('go2').disabled = true;
   $('ocr-bar').style.width = '0%';
   $('ocr-pct').textContent = '0%';
+  $('photo-preview').src = state.photo;
 
   try {
     const img = await prep(state.photo);
