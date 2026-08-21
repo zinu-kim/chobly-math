@@ -178,6 +178,49 @@ h1.page{
 .check .t{font-size:14px;font-weight:600}
 .check .d{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
 
+/* ── 사진 넣기 ── */
+.dropzone{
+  border:1.5px dashed #C3CBD4;border-radius:14px;background:var(--soft);
+  padding:34px 18px;text-align:center;
+}
+.dz-icon{font-size:34px;line-height:1;margin-bottom:12px}
+.dz-t{font-size:15px;font-weight:600;margin-bottom:6px}
+.dz-d{font-size:12.5px;color:var(--muted);line-height:1.6}
+.photo{background:#23272E;border-radius:14px;padding:16px;position:relative}
+.photo.sm{padding:12px}
+.photo .paper{
+  background:#F7F3EA;color:#2B2620;border-radius:3px;padding:16px 14px;
+  transform:rotate(-1.1deg);box-shadow:0 6px 18px -6px rgba(0,0,0,.55);
+}
+.photo.sm .paper{padding:12px 11px}
+.photo .paper p{margin:0;font-size:13.5px;line-height:1.7;letter-spacing:-.01em}
+.photo.sm .paper p{font-size:12.5px}
+.photo .pnum{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  color:#8C8271;margin-bottom:7px;
+}
+.photo .pline{height:1px;background:#D8CFBE;margin-top:14px}
+.photo .pline.short{width:55%;margin-top:9px}
+.photo-tag{
+  position:absolute;right:10px;bottom:8px;font-family:"IBM Plex Mono",monospace;
+  font-size:9.5px;color:#767D88;letter-spacing:.04em;
+}
+
+/* ── 문제 고르기 카드 ── */
+.pickcard{
+  display:flex;gap:11px;border:1px solid var(--line);border-radius:14px;
+  background:var(--card);padding:13px;cursor:pointer;transition:.14s;
+}
+.pickcard.on{border-color:var(--acc);background:var(--accSoft)}
+.pickcard.bad{border-color:#EFD8AE;background:#FFFBF3}
+.pickcard.bad.on{border-color:var(--acc);background:var(--accSoft)}
+.pk-box{
+  flex:none;width:24px;height:24px;border-radius:7px;border:1.8px solid #C3CBD4;
+  background:#fff;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;margin-top:1px;
+}
+.pickcard.on .pk-box{background:var(--acc);border-color:var(--acc)}
+.pk-main{flex:1;min-width:0}
+
 /* ── 문제 본문 ── */
 .qnum{
   font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
@@ -417,7 +460,8 @@ const $ = id => document.getElementById(id);
    ══════════════════════════════════════════════ */
 const S = {
   app:"parent",
-  p:{ screen:"home", count:5, withSol:true, ai:"claude", pasted:false, removed:[], shared:false },
+  p:{ screen:"home", count:5, withSol:true, ai:"claude",
+     photo:false, read:false, gen:false, picked:[], shared:false },
   k:{ screen:"home", idx:0, tries:0, phase:"input", results:[], order:[0,1,2,3,4], loaded:false }
 };
 
@@ -435,13 +479,27 @@ function copy(text,msg){
    ══════════════════════════════════════════════ */
 const P = {};
 
+const aiName = () => S.p.ai==="claude" ? "Claude" : "ChatGPT";
+
+/* 촬영한 교재 사진 목업 */
+function photoBox(small){
+  return `<div class="photo ${small?'sm':''}">
+    <div class="paper">
+      <div class="pnum">5</div>
+      <p>우유가 한 병에 500 mL씩 들어 있습니다.<br>6병에 들어 있는 우유는 모두 몇 L입니까?</p>
+      <div class="pline"></div><div class="pline short"></div>
+    </div>
+    <div class="photo-tag">IMG_2481.jpg</div>
+  </div>`;
+}
+
 P.home = () => ({
   head:{ title:"초연이의 수학문제 생성기", sub:"아빠용 · 문제 만들기", badge:"PARENT" },
   body:`
-    <button class="btn btn-primary btn-full" style="padding:17px" onclick="go('p','step1')">＋ 새 문제 만들기</button>
+    <button class="btn btn-primary btn-full" style="padding:17px" onclick="startNew()">＋ 새 문제 만들기</button>
     <p class="sect-label" style="margin-top:24px">최근 만든 문제 · 5개까지 보관</p>
     <div class="stack">
-      ${S.p.shared ? histCard("오늘","들이 단위 바꾸기",5,true,true) : ""}
+      ${S.p.shared ? histCard("오늘","들이 단위 바꾸기",4,true,true) : ""}
       ${histCard("8월 19일","분수의 뺄셈",5,true,false)}
       ${histCard("8월 17일","소수의 곱셈",4,false,false)}
       ${histCard("8월 14일","평균 구하기",5,true,false)}
@@ -465,130 +523,176 @@ function histCard(date,title,n,sol,isNew){
       <span class="dot">·</span><span>${sol?'풀이 포함':'풀이 없음'}</span>
     </div>
     <div style="display:flex;gap:6px;margin-top:11px">
-      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('문제를 다시 봅니다')">문제 보기</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('문제와 원본 사진을 다시 봅니다')">문제 보기</button>
       <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('카톡 공유창이 열립니다')">카톡으로 보내기</button>
     </div>
   </div>`;
 }
 
-P.step1 = () => ({
-  head:{ title:"1단계 · 요청 만들기", sub:"AI에게 붙여넣을 프롬프트를 만듭니다", back:"home" },
+/* ── 1단계 · 사진 넣기 ── */
+P.shot = () => ({
+  head:{ title:"1단계 · 문제 사진 넣기", sub:"카톡으로 받은 사진을 고르세요", back:"home" },
   body:`
-    <div class="steps"><i class="on"></i><i></i><i></i><i></i></div>
-    <p class="sect-label">몇 문제를 만들까요</p>
+    <div class="steps"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+    ${S.p.photo ? photoBox() : `<div class="dropzone">
+        <div class="dz-icon">📷</div>
+        <div class="dz-t">문제 사진을 넣어주세요</div>
+        <div class="dz-d">초연이가 카톡으로 보낸 사진은<br>갤러리에 들어 있습니다</div>
+      </div>`}
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="pickPhoto()">🖼 갤러리에서 고르기</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="pickPhoto()">📷 바로 촬영</button>
+    </div>
+    ${S.p.photo?`
+      <p class="sect-label" style="margin-top:24px">어떤 AI를 쓸까요</p>
+      <div class="switchrow">
+        <button aria-pressed="${S.p.ai==='claude'}" onclick="setAI('claude')">Claude</button>
+        <button aria-pressed="${S.p.ai==='gpt'}" onclick="setAI('gpt')">ChatGPT</button>
+      </div>
+      <p class="hint" style="margin-top:14px">
+        이번 요청은 <b>문제를 읽고 푸는 것까지만</b>입니다.<br>
+        새 문제는 아빠가 확인한 다음에 만듭니다.
+      </p>
+      <div class="stack" style="margin-top:12px">
+        <button class="btn btn-primary btn-full" onclick="copy('READ_PROMPT','읽기 요청을 복사했습니다')">📋 읽기 요청 복사하기</button>
+        <button class="btn btn-ghost btn-full" onclick="toast(aiName()+' 앱이 열립니다 · 사진 첨부 후 붙여넣기')">${aiName()} 앱 열기 →</button>
+      </div>`:""}`,
+  foot:`<button class="btn btn-primary btn-full" ${S.p.photo?"":"disabled"} onclick="go('p','confirm')">
+          ${S.p.photo?"다음 · 읽은 결과 확인 →":"먼저 사진을 넣어주세요"}</button>`
+});
+
+/* ── 2단계 · 인식 확인 (게이트) ── */
+P.confirm = () => ({
+  head:{ title:"2단계 · 인식 확인", sub:"제대로 읽고 풀었는지 확인", back:"shot" },
+  body:`
+    <div class="steps"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+    <textarea class="field" rows="${S.p.read?3:8}" placeholder="${aiName()} 답변을 여기에 붙여넣으세요&#10;&#10;앞뒤에 설명이 섞여 있어도 괜찮습니다.">${S.p.read?'{"text":"우유가 한 병에 500 mL씩 들어 있습니다. 6병에 들어 있는 우유는 모두 몇 L입니까?","answer":"3","unit":"L","check":"500*6/1000"}':''}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="doRead()">📥 붙여넣기</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="S.p.read=false;render()">지우기</button>
+    </div>
+    ${S.p.read?`
+      <p class="sect-label" style="margin-top:22px">사진 ↔ 읽어낸 문제</p>
+      ${photoBox(true)}
+      <div class="card" style="margin-top:10px">
+        <div class="qnum" style="margin-bottom:8px">읽어낸 문제 · 고칠 수 있어요</div>
+        <textarea class="field" rows="3"
+          style="font-family:'IBM Plex Sans KR',sans-serif;font-size:14px;line-height:1.65;background:#fff">${ORIGIN.text}</textarea>
+        <div class="meta" style="margin-top:12px">
+          <span>AI가 낸 답</span><span class="dot">·</span>
+          <b style="color:var(--ink);font-size:16px;font-family:'IBM Plex Mono',monospace">${ORIGIN.answer}</b>
+          <span class="chip ok" style="margin-left:auto">검산 일치</span>
+        </div>
+        <div class="meta" style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:11.5px">${ORIGIN.check}</div>
+      </div>
+      <p class="hint" style="margin-top:12px">
+        글자를 잘못 읽었으면 <b>위 상자에서 직접 고치세요.</b> 고친 문장이 다음 요청에 그대로 들어갑니다.
+      </p>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="go('p','shot')">사진부터 다시</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="copy('READ_PROMPT','같은 사진으로 다시 읽는 요청을 복사했습니다')">다시 읽어달라기</button>
+      </div>`
+    :`<p class="hint" style="margin-top:16px">
+        ${aiName()}가 <b>문제를 읽고 푼 결과</b>를 붙여넣으면, 원본 사진과 나란히 놓고 확인할 수 있습니다.
+      </p>`}`,
+  foot:`<button class="btn btn-primary btn-full" ${S.p.read?"":"disabled"} onclick="okConfirm()">
+          ${S.p.read?"✓ 맞습니다 · 문제 만들기 →":"결과를 붙여넣어 주세요"}</button>`
+});
+
+/* ── 3단계 · 생성 요청 ── */
+P.make = () => ({
+  head:{ title:"3단계 · 문제 만들기 요청", sub:"확인된 문제와 같은 유형으로", back:"confirm" },
+  body:`
+    <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+    <div class="card" style="border-color:var(--ok);background:#F2FAF6">
+      <div class="hist-top"><span class="hist-title" style="color:var(--ok)">✓ 확인 끝난 문제</span></div>
+      <p class="qtext" style="font-size:13.5px;margin-top:4px">${ORIGIN.text}</p>
+      <div class="meta" style="margin-top:9px"><span>정답</span><span class="dot">·</span>
+        <b style="color:var(--ink);font-family:'IBM Plex Mono',monospace">${ORIGIN.answer}</b></div>
+    </div>
+
+    <p class="sect-label" style="margin-top:22px">몇 문제를 만들까요</p>
     <div class="countrow">
       ${[1,2,3,4,5].map(n=>`<button aria-pressed="${S.p.count===n}" onclick="setCount(${n})">${n}</button>`).join("")}
     </div>
+
     <p class="sect-label" style="margin-top:22px">풀이</p>
     <label class="check" onclick="setTimeout(()=>toggleSol(),0)">
       <input type="checkbox" ${S.p.withSol?"checked":""}>
       <span><span class="t">풀이도 같이 만들기</span>
       <span class="d">초연이 앱에 풀이가 저장되어 인터넷 없이도 바로 뜹니다. 대신 보낼 코드가 조금 길어집니다.</span></span>
     </label>
-    <p class="sect-label" style="margin-top:22px">어떤 AI를 쓸까요</p>
-    <div class="switchrow">
-      <button aria-pressed="${S.p.ai==='claude'}" onclick="setAI('claude')">Claude</button>
-      <button aria-pressed="${S.p.ai==='gpt'}" onclick="setAI('gpt')">ChatGPT</button>
-    </div>
-    <p class="hint" style="margin-top:10px">
-      Claude 사용량을 다 쓴 날은 ChatGPT로 바꾸세요. 프롬프트 문구만 알아서 달라집니다.
-    </p>
-    <div style="margin-top:22px" class="stack">
-      <button class="btn btn-primary btn-full" onclick="copy('PROMPT','프롬프트를 복사했습니다')">📋 프롬프트 복사하기</button>
-      <button class="btn btn-ghost btn-full" onclick="toast('${S.p.ai==='claude'?'Claude':'ChatGPT'} 앱이 열립니다')">
-        ${S.p.ai==='claude'?'Claude':'ChatGPT'} 앱 열기 →</button>
+
+    <div class="stack" style="margin-top:22px">
+      <button class="btn btn-primary btn-full" onclick="copy('MAKE_PROMPT','생성 요청을 복사했습니다')">📋 생성 요청 복사하기</button>
+      <button class="btn btn-ghost btn-full" onclick="toast('아까 그 대화에 이어서 붙여넣으세요')">${aiName()} 앱 열기 →</button>
     </div>
     <p class="hint" style="margin-top:16px">
-      <b>순서</b><br>① 프롬프트 복사 → ② ${S.p.ai==='claude'?'Claude':'ChatGPT'} 앱에서 <b>문제 사진 첨부</b> + 붙여넣기 →
-      ③ 답변 전체 복사 → ④ 아래 [다음] 눌러서 붙여넣기
+      <b>사진은 다시 안 올려도 됩니다.</b> 확인된 문제 글이 요청 안에 들어갑니다.
+      아까 그 대화에 <b>이어서 붙여넣기</b>만 하세요.
     </p>`,
-  foot:`<button class="btn btn-primary btn-full" onclick="go('p','step2')">다음 · 결과 붙여넣기 →</button>`
+  foot:`<button class="btn btn-primary btn-full" onclick="go('p','pick')">다음 · 만들어진 문제 보기 →</button>`
 });
 
-P.step2 = () => ({
-  head:{ title:"2단계 · 결과 붙여넣기", sub:"AI 답변을 통째로 붙여넣으세요", back:"step1" },
-  body:`
-    <div class="steps"><i class="on"></i><i class="on"></i><i></i><i></i></div>
-    <textarea class="field" rows="11" placeholder="여기에 AI 답변을 붙여넣으세요&#10;&#10;앞뒤에 설명이 섞여 있어도 괜찮습니다.&#10;필요한 부분만 알아서 골라냅니다." id="pastebox">${S.p.pasted?'{"origin":{"text":"우유가 한 병에 500 mL씩...","answer":"3 L"},"problems":[{"text":"주스가 한 병에 750 mL...","answer":"3","unit":"L","check":"750*4/1000"}, ... ]}':''}</textarea>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="fakePaste()">📥 붙여넣기</button>
-      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="clearPaste()">지우기</button>
-    </div>
-    <p class="hint" style="margin-top:16px">
-      형식이 깨져 있으면 <b>어디가 문제인지</b> 알려드립니다. 그럴 땐 AI에게 "다시 형식대로 출력해줘"라고 한 번 더 시키면 됩니다.
-    </p>`,
-  foot:`<button class="btn btn-primary btn-full" ${S.p.pasted?"":"disabled"} onclick="go('p','step3')">
-          ${S.p.pasted?"불러오기 →":"먼저 붙여넣어 주세요"}</button>`
-});
-
-P.step3 = () => {
-  const live = GENERATED.map((g,i)=>({...g,i})).filter(g=>!S.p.removed.includes(g.i));
-  const bad = live.filter(g=>!g.ok).length;
+/* ── 4단계 · 조회하고 고르기 ── */
+P.pick = () => {
+  const n = S.p.picked.length;
   return {
-    head:{ title:"3단계 · 검토", sub:`${live.length}문제 · 아빠가 확인해주세요`, back:"step2" },
+    head:{ title:"4단계 · 문제 고르기", sub:S.p.gen?`${n}개 선택됨`:"만들어진 문제를 붙여넣으세요", back:"make" },
     body:`
-      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
-
-      <p class="sect-label">사진에서 읽어낸 원본 문제</p>
-      <div class="card">
-        <p class="qtext" style="font-size:14.5px">${ORIGIN.text}</p>
-        <div class="meta" style="margin-top:11px">
-          <span>AI가 낸 답</span><span class="dot">·</span>
-          <b style="color:var(--ink);font-family:'IBM Plex Mono',monospace">${ORIGIN.answer}</b>
-        </div>
-        <div style="display:flex;gap:6px;margin-top:11px">
-          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('문제 글을 직접 고칠 수 있습니다')">✎ 문제 고치기</button>
-          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="go('p','step1')">사진부터 다시</button>
-        </div>
+      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+      <textarea class="field" rows="${S.p.gen?3:8}" placeholder="만들어진 문제를 여기에 붙여넣으세요">${S.p.gen?'{"problems":[{"text":"주스가 한 병에 750 mL…","answer":"3","unit":"L","check":"750*4/1000"}, … 5개 … ]}':''}</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="doGen()">📥 붙여넣기</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="S.p.gen=false;S.p.picked=[];render()">지우기</button>
       </div>
-      <p class="hint" style="margin-top:10px">
-        읽어낸 문제와 <b>AI가 낸 답이 맞는지</b> 눈으로 확인해주세요. 여기가 맞아야 아래 문제들도 맞습니다.
-      </p>
-
-      ${bad ? `<div class="card" style="margin-top:20px;border-color:#EFD8AE;background:#FFFBF3">
-        <div class="hist-top"><span class="hist-title" style="color:var(--warn)">⚠ 검산이 안 맞는 문제 ${bad}개</span></div>
-        <p class="meta" style="line-height:1.6">앱이 AI가 준 식을 직접 계산해봤는데 답과 달랐습니다. 빼는 걸 권합니다.</p>
-      </div>` : ""}
-
-      <p class="sect-label" style="margin-top:20px">만들어진 문제 ${live.length}개</p>
-      <div class="stack">
-        ${GENERATED.map((g,i)=>{
-          if(S.p.removed.includes(i)) return `<div class="card" style="background:var(--soft);border-style:dashed">
-            <div class="meta"><span>${i+1}번 문제를 뺐습니다</span>
-            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="undoRemove(${i})">되돌리기</button></div></div>`;
-          return `<div class="card">
-            <div class="hist-top">
-              <span class="qnum" style="margin:0">Q${i+1}</span>
-              <span class="chip ${g.ok?'ok':'warn'}" style="margin-left:auto">${g.ok?'검산 일치':'검산 불일치'}</span>
-            </div>
-            <p class="qtext" style="font-size:14.5px;margin-top:6px">${fmt(g.t)}</p>
-            <div class="meta" style="margin-top:10px">
-              <span>정답</span><span class="dot">·</span>
-              <b style="color:var(--ink);font-size:14px">${fmt(g.a)}</b>
-            </div>
-            <div class="meta" style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
-                 color:${g.ok?'var(--muted)':'var(--bad)'}">${g.c}${g.ok?'':'  ← 답과 다름'}</div>
-            <div style="display:flex;gap:6px;margin-top:11px">
-              <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('이 문제만 다시 만드는 프롬프트를 복사합니다')">다시 만들기</button>
-              <button class="btn btn-danger btn-sm" style="flex:1" onclick="removeQ(${i})">이 문제 빼기</button>
-            </div>
-          </div>`;
-        }).join("")}
-      </div>`,
-    foot:`<button class="btn btn-primary btn-full" onclick="go('p','step4')">확인했습니다 · 코드 만들기 →</button>`
+      ${S.p.gen?`
+        <p class="sect-label" style="margin-top:22px">만들어진 문제 ${GENERATED.length}개 · 보낼 것만 체크</p>
+        <div class="stack">${GENERATED.map((g,i)=>pickCard(g,i)).join("")}</div>
+        <p class="hint" style="margin-top:14px">
+          앱이 AI가 준 식을 직접 계산해서 답과 대조합니다.
+          <b>검산이 안 맞는 문제는 체크를 미리 풀어</b> 놓았습니다.
+        </p>`
+      :`<p class="hint" style="margin-top:16px">
+          붙여넣으면 문제를 하나씩 보면서 <b>초연이에게 보낼 것만</b> 고를 수 있습니다.
+        </p>`}`,
+    foot:`<button class="btn btn-primary btn-full" ${n?"":"disabled"} onclick="go('p','send')">
+            ${n?`${n}문제 내보내기 →`:"보낼 문제를 골라주세요"}</button>`
   };
 };
 
-P.step4 = () => {
-  const live = GENERATED.length - S.p.removed.length;
+function pickCard(g,i){
+  const on = S.p.picked.includes(i);
+  return `<div class="pickcard ${on?'on':''} ${g.ok?'':'bad'}" onclick="togglePick(${i})">
+    <div class="pk-box">${on?'✓':''}</div>
+    <div class="pk-main">
+      <div class="hist-top" style="margin-bottom:4px">
+        <span class="qnum" style="margin:0">Q${i+1}</span>
+        <span class="chip ${g.ok?'ok':'warn'}" style="margin-left:auto">${g.ok?'검산 일치':'검산 불일치'}</span>
+      </div>
+      <p class="qtext" style="font-size:14px">${fmt(g.t)}</p>
+      <div class="meta" style="margin-top:9px">
+        <span>정답</span><span class="dot">·</span><b style="color:var(--ink);font-size:14px">${fmt(g.a)}</b>
+      </div>
+      <div class="meta" style="margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+           color:${g.ok?'var(--muted)':'var(--bad)'}">${g.c}${g.ok?'':'  ← 답과 다름'}</div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:10px"
+        onclick="event.stopPropagation();toast('이 문제만 다시 만드는 요청을 복사합니다')">이 문제만 다시 만들기</button>
+    </div>
+  </div>`;
+}
+
+/* ── 5단계 · 내보내기 ── */
+P.send = () => {
+  const n = S.p.picked.length;
   return {
-    head:{ title:"4단계 · 초연이에게 보내기", sub:"코드를 통째로 복사해서 카톡으로", back:"step3" },
+    head:{ title:"5단계 · 초연이에게 보내기", sub:`${n}문제`, back:"pick" },
     body:`
-      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
       <div class="card">
-        <div class="kv"><span class="k">문제 수</span><span class="v">${live}문제</span></div>
+        <div class="kv"><span class="k">보낼 문제</span><span class="v">${n}문제</span></div>
         <div class="kv"><span class="k">풀이</span><span class="v">${S.p.withSol?"포함":"없음"}</span></div>
-        <div class="kv"><span class="k">코드 길이</span><span class="v">${S.p.withSol?"1.4":"0.6"} KB</span></div>
+        <div class="kv"><span class="k">코드 길이</span><span class="v">${S.p.withSol?(0.28*n+0.2).toFixed(1):(0.12*n+0.1).toFixed(1)} KB</span></div>
         <div class="kv"><span class="k">카톡 한 번에</span><span class="v" style="color:var(--ok)">보낼 수 있음</span></div>
       </div>
       <p class="sect-label" style="margin-top:20px">보낼 코드</p>
@@ -598,7 +702,8 @@ P.step4 = () => {
         <button class="btn btn-ghost btn-full" onclick="copy(SHARECODE,'코드를 복사했습니다')">📋 코드만 복사</button>
       </div>
       <p class="hint" style="margin-top:16px">
-        초연이가 카톡에서 <b>이 메시지를 길게 눌러 전체 복사</b>한 뒤, 자기 앱에서 [문제 불러오기]에 붙여넣으면 됩니다.
+        초연이가 카톡에서 <b>이 메시지를 길게 눌러 전체 복사</b>한 뒤,
+        자기 앱에서 [문제 불러오기]에 붙여넣으면 됩니다.
       </p>`,
     foot:`<button class="btn btn-ghost btn-full" onclick="finishParent()">완료 · 홈으로</button>`
   };
@@ -800,15 +905,24 @@ K.result = () => {
    동작
    ══════════════════════════════════════════════ */
 function go(app,screen){ S[app].screen=screen; render(); }
+function startNew(){ S.p.photo=false; S.p.read=false; S.p.gen=false; S.p.picked=[]; S.p.screen="shot"; render(); }
+function pickPhoto(){ S.p.photo=true; render(); toast("사진을 넣었습니다"); }
+function doRead(){ S.p.read=true; render(); toast("읽은 결과를 붙여넣었습니다"); }
+function okConfirm(){ S.p.screen="make"; render(); toast("확인 완료 · 이제 문제를 만듭니다"); }
 function setCount(n){ S.p.count=n; render(); }
 function toggleSol(){ S.p.withSol=!S.p.withSol; render(); }
 function setAI(a){ S.p.ai=a; render(); }
-function fakePaste(){ S.p.pasted=true; render(); toast("AI 답변을 붙여넣었습니다"); }
-function clearPaste(){ S.p.pasted=false; render(); }
-function removeQ(i){ S.p.removed.push(i); render(); toast("문제를 뺐습니다"); }
-function undoRemove(i){ S.p.removed=S.p.removed.filter(x=>x!==i); render(); }
+function doGen(){
+  S.p.gen=true;
+  S.p.picked = GENERATED.map((g,i)=>g.ok?i:-1).filter(i=>i>=0);   // 검산 안 맞는 건 체크 해제
+  render(); toast(GENERATED.length+"문제를 불러왔습니다");
+}
+function togglePick(i){
+  S.p.picked = S.p.picked.includes(i) ? S.p.picked.filter(x=>x!==i) : S.p.picked.concat(i).sort();
+  render();
+}
 function doShare(){ S.p.shared=true; toast("카톡 공유창이 열립니다"); }
-function finishParent(){ S.p.shared=true; S.p.screen="home"; S.p.removed=[]; S.p.pasted=false; render(); }
+function finishParent(){ S.p.shared=true; S.p.screen="home"; render(); }
 function kidPaste(){ S.k.loaded=true; render(); toast("코드를 붙여넣었어요"); }
 
 function startQuiz(mode){
@@ -820,24 +934,33 @@ function startQuiz(mode){
 }
 
 const NOTES = {
-  "parent:home":["홈","아빠 앱 · 홈","맨 위 큰 버튼 하나로 시작합니다. 아래는 최근 만든 문제 5개.",
+  "parent:home":["홈","아빠 앱 · 홈","큰 버튼 하나로 시작합니다. 아래는 최근 만든 문제 5개.",
     ["<b>파란 테두리 + NEW 배지</b>가 방금 만든 문제입니다.",
      "이력에서 바로 <b>카톡 재전송</b>이 됩니다. 초연이가 코드를 지워도 다시 보낼 수 있어요.",
      "6번째를 만들면 맨 아래가 자동으로 사라집니다."]],
-  "parent:step1":["1단계","아빠 앱 · 요청 만들기","문제 수와 풀이 포함 여부를 고르고, 프롬프트를 복사합니다.",
-    ["<b>풀이 포함 체크박스</b> — 켜면 초연이 앱이 인터넷 없이도 풀이를 바로 띄웁니다.",
-     "<b>Claude / ChatGPT 전환</b> — 사용량 다 쓴 날 대비용. 프롬프트 문구만 바뀝니다.",
-     "[앱 열기]는 실제로 그 앱을 띄웁니다. 거기서 사진 첨부하고 붙여넣기만 하면 끝."]],
-  "parent:step2":["2단계","아빠 앱 · 결과 붙여넣기","AI 답변을 통째로 붙여넣습니다.",
-    ["앞뒤에 AI가 붙인 설명이 섞여 있어도 필요한 부분만 골라냅니다.",
-     "[붙여넣기] 버튼을 눌러 다음 화면을 보세요."]],
-  "parent:step3":["3단계","아빠 앱 · 검토 ★핵심","아빠가 눈으로 확인하는 화면입니다. 여기가 품질의 전부입니다.",
-    ["맨 위에 <b>사진에서 읽어낸 원본 문제 + AI 답</b>. 잘못 읽었으면 직접 고칩니다.",
-     "각 문제마다 <b>검산 배지</b> — 앱이 AI가 준 식을 직접 계산해서 답과 대조합니다.",
-     "<b>5번 문제를 일부러 틀리게</b> 넣어놨습니다. 1.4 × 5 = 7 인데 답은 7.5라고 했죠. 이런 걸 앱이 잡습니다.",
-     "[이 문제 빼기] → 뺀 자리에 되돌리기 줄이 남습니다."]],
-  "parent:step4":["4단계","아빠 앱 · 보내기","코드를 만들어 카톡으로 보냅니다.",
-    ["코드 길이를 미리 보여줘서 <b>카톡 한 번에 들어가는지</b> 알려줍니다.",
+  "parent:shot":["1단계","아빠 앱 · 사진 넣기","앱이 사진을 직접 받습니다. 갤러리에서 고르거나 바로 촬영.",
+    ["사진을 앱이 가지고 있어야 <b>다음 화면에서 원본과 대조</b>할 수 있습니다.",
+     "이번 요청은 <b>읽고 푸는 것까지만</b>입니다. 생성은 시키지 않습니다.",
+     "[사진 넣기]를 눌러야 아래 요청 복사 버튼이 나옵니다.",
+     "Claude / ChatGPT 전환은 여기서 합니다."]],
+  "parent:confirm":["2단계","아빠 앱 · 인식 확인 ★게이트","여기를 통과해야 생성으로 넘어갑니다.",
+    ["<b>원본 사진과 읽어낸 문장이 나란히</b> 놓입니다.",
+     "잘못 읽은 글자는 <b>그 자리에서 직접 고칩니다.</b> 고친 문장이 다음 요청에 들어갑니다.",
+     "AI가 낸 답도 함께 보여주고, 앱이 식을 계산해 검산합니다.",
+     "[맞습니다]를 눌러야만 3단계로 넘어갑니다. 아니면 [사진부터 다시] 또는 [다시 읽어달라기]."]],
+  "parent:make":["3단계","아빠 앱 · 생성 요청","확인된 문제로 같은 유형 문제를 만들라고 시킵니다.",
+    ["맨 위 초록 카드가 <b>2단계에서 확정한 문제</b>입니다.",
+     "<b>사진을 다시 올릴 필요가 없습니다.</b> 확정된 문장이 요청문 안에 들어갑니다.",
+     "Claude 앱에서 <b>아까 그 대화에 이어서</b> 붙여넣으면 됩니다.",
+     "문제 수와 풀이 포함 여부를 여기서 고릅니다."]],
+  "parent:pick":["4단계","아빠 앱 · 조회하고 고르기 ★핵심","만들어진 문제를 하나씩 보고 보낼 것만 체크합니다.",
+    ["카드를 누르면 <b>체크가 켜지고 꺼집니다.</b>",
+     "각 문제마다 <b>검산 배지</b> — 앱이 AI가 준 식을 직접 계산해 답과 대조합니다.",
+     "<b>Q5를 일부러 틀리게</b> 넣어놨습니다. 1.4 × 5 = 7 인데 답은 7.5라고 했죠.",
+     "검산이 안 맞는 문제는 <b>체크가 미리 풀린 채로</b> 뜹니다.",
+     "[이 문제만 다시 만들기] 로 그 문제만 재요청할 수 있습니다."]],
+  "parent:send":["5단계","아빠 앱 · 내보내기","고른 문제만 코드로 만들어 보냅니다.",
+    ["코드 길이가 <b>선택한 문제 수에 따라</b> 바뀝니다.",
      "[카톡으로 보내기]는 안드로이드 공유창을 띄웁니다.",
      "완료를 누르면 홈 이력 맨 위에 NEW로 올라갑니다."]],
   "kid:home":["홈","초연이 앱 · 홈","받은 문제 5개가 쌓여 있습니다.",
@@ -886,7 +1009,7 @@ function render(){
     <ul>${n[3].map(x=>`<li>${x}</li>`).join("")}</ul>
     <div class="jump">
       ${(app==="parent"
-        ? [["home","홈"],["step1","1단계"],["step2","2단계"],["step3","3단계"],["step4","4단계"]]
+        ? [["home","홈"],["shot","①사진"],["confirm","②인식확인"],["make","③생성요청"],["pick","④고르기"],["send","⑤보내기"]]
         : [["home","홈"],["load","불러오기"],["quiz","문제풀기"],["result","결과"]]
        ).map(([s,l])=>`<button onclick="jump('${s}')">${l}</button>`).join("")}
     </div>`;
@@ -899,11 +1022,17 @@ function jump(s){
     if(s==="quiz"){ startQuiz('all'); return; }
     if(s==="result"){ S.k.order=[0,1,2,3,4]; S.k.results=[true,true,false,true,true]; S.k.screen="result"; render(); return; }
     if(s==="load"){ S.k.loaded=false; }
+    S.k.screen=s; render(); return;
   }
-  if(app==="parent"){
-    if(s==="step3"||s==="step4") S.p.pasted=true;
-  }
-  (app==="parent"?S.p:S.k).screen=s; render();
+  // 아빠 앱 — 앞 단계 상태를 만들어 놓고 점프
+  S.p.photo = (s!=="home" && s!=="shot") || S.p.photo;
+  S.p.read  = (s==="make"||s==="pick"||s==="send");
+  if(s==="pick"||s==="send"){
+    S.p.gen=true;
+    if(!S.p.picked.length) S.p.picked = GENERATED.map((g,i)=>g.ok?i:-1).filter(i=>i>=0);
+  } else if(s!=="send"){ S.p.gen=false; S.p.picked=[]; }
+  if(s==="shot"||s==="home"){ S.p.read=false; S.p.gen=false; S.p.picked=[]; }
+  S.p.screen=s; render();
 }
 
 document.querySelectorAll('.apptab').forEach(b=>{
