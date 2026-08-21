@@ -1,0 +1,1042 @@
+<title>초연이의 수학문제 생성기</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ─────────────────────────────────────────────
+   토큰 — 페이지 크롬(미리보기 껍데기)은 테마 대응.
+   폰 화면 안쪽(.screen)은 "기기 화면"이라 라이트 고정.
+   ───────────────────────────────────────────── */
+:root{
+  --pg-bg:#EDEFF2; --pg-surface:#FFFFFF; --pg-ink:#12161C; --pg-muted:#59616E;
+  --pg-line:#D8DDE4; --pg-accent:#0B6E63; --pg-shadow:0 18px 40px -22px rgba(18,22,28,.45);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --pg-bg:#14181E; --pg-surface:#1B2029; --pg-ink:#E7EBF0; --pg-muted:#98A2B0;
+    --pg-line:#2C333E; --pg-accent:#4FBFB0; --pg-shadow:0 18px 44px -20px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --pg-bg:#14181E; --pg-surface:#1B2029; --pg-ink:#E7EBF0; --pg-muted:#98A2B0;
+  --pg-line:#2C333E; --pg-accent:#4FBFB0; --pg-shadow:0 18px 44px -20px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--pg-bg); color:var(--pg-ink);
+  font-family:"IBM Plex Sans KR",-apple-system,"Segoe UI",sans-serif;
+  -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 18px 64px}
+
+/* ── 페이지 헤더 ── */
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--pg-accent); margin:0 0 10px;
+}
+h1.page{
+  font-family:Hahmlet,"IBM Plex Sans KR",serif; font-weight:700;
+  font-size:clamp(26px,5vw,40px); line-height:1.2; margin:0 0 12px; text-wrap:balance;
+}
+.lede{margin:0;color:var(--pg-muted);font-size:15px;line-height:1.7;max-width:62ch}
+.lede b{color:var(--pg-ink);font-weight:600}
+
+/* ── 앱 전환 탭 ── */
+.apptabs{display:flex;gap:8px;margin:26px 0 18px;flex-wrap:wrap}
+.apptab{
+  appearance:none;border:1px solid var(--pg-line);background:var(--pg-surface);
+  color:var(--pg-muted);font-family:inherit;font-size:14px;font-weight:600;
+  padding:11px 18px;border-radius:999px;cursor:pointer;transition:.16s;
+}
+.apptab:hover{color:var(--pg-ink)}
+.apptab[aria-selected="true"]{background:var(--pg-ink);color:var(--pg-bg);border-color:var(--pg-ink)}
+.apptab:focus-visible{outline:2px solid var(--pg-accent);outline-offset:2px}
+
+/* ── 무대: 폰 + 노트 ── */
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+@media (min-width:900px){ .stage{grid-template-columns:minmax(0,392px) minmax(0,1fr);gap:36px} }
+
+.phone{
+  background:#0E1116;border-radius:34px;padding:10px;box-shadow:var(--pg-shadow);
+  margin:0 auto;width:100%;max-width:392px;min-width:0;
+}
+.screen{
+  background:#FFFFFF;border-radius:26px;overflow:hidden;
+  height:730px;display:flex;flex-direction:column;position:relative;min-width:0;
+  /* 앱 내부 팔레트 — 라이트 고정 */
+  --ink:#12161C; --muted:#5C6470; --line:#E3E7EC; --soft:#F4F6F8; --card:#FFFFFF;
+  --new:#1D6FE0; --ok:#177E52; --bad:#C0392B; --warn:#B26A00;
+  color:var(--ink);
+}
+.screen[data-app="parent"]{--acc:#0B6E63;--accSoft:#E4F1EF}
+.screen[data-app="kid"]{--acc:#E07B39;--accSoft:#FDEEE2}
+@media (max-width:560px){
+  .phone{padding:0;border-radius:0;background:transparent;box-shadow:none;max-width:none}
+  .screen{border-radius:16px;height:680px;border:1px solid var(--pg-line)}
+}
+
+/* ── 폰 내부: 상태바 / 헤더 / 본문 / 하단바 ── */
+.statusbar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:9px 18px 3px;font-family:"IBM Plex Mono",monospace;font-size:11px;
+  color:#8A929D;flex:none;
+}
+.apphead{
+  flex:none;padding:8px 16px 12px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:10px;min-height:52px;
+}
+.apphead .back{
+  appearance:none;border:0;background:none;font:inherit;font-size:19px;line-height:1;
+  color:var(--muted);cursor:pointer;padding:4px 6px 4px 0;
+}
+.apphead h2{margin:0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+.apphead .sub{margin:2px 0 0;font-size:11px;color:var(--muted);font-weight:500}
+.badge-mode{
+  margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;
+  letter-spacing:.06em;padding:4px 8px;border-radius:5px;background:var(--accSoft);color:var(--acc);
+}
+.body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:16px}
+.footbar{
+  flex:none;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top:1px solid var(--line);background:var(--card);display:flex;gap:8px;min-width:0;
+}
+.footbar>*{min-width:0}
+.btn{min-width:0}
+
+/* ── 버튼 ── */
+.btn{
+  appearance:none;font-family:inherit;font-size:15px;font-weight:600;border-radius:12px;
+  padding:14px 16px;border:1px solid transparent;cursor:pointer;transition:.14s;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;line-height:1.2;
+}
+.btn:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.btn-primary{background:var(--acc);color:#fff;flex:1}
+.btn-primary:hover{filter:brightness(1.08)}
+.btn-primary:disabled{background:#C7CDD4;cursor:not-allowed;filter:none}
+.btn-ghost{background:var(--card);color:var(--ink);border-color:var(--line)}
+.btn-ghost:hover{background:var(--soft)}
+.btn-sm{font-size:13px;padding:9px 12px;border-radius:9px}
+.btn-full{width:100%}
+.btn-danger{background:var(--card);color:var(--bad);border-color:#F0D2CE}
+
+/* ── 공용 조각 ── */
+.sect-label{
+  font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 9px;font-weight:600;
+}
+.stack{display:flex;flex-direction:column;gap:12px}
+.card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:14px}
+.card.is-new{border-color:var(--new);border-width:1.5px;background:#F5F9FF}
+.hist-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.hist-title{font-size:14px;font-weight:600;flex:1;letter-spacing:-.01em}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:9.5px;font-weight:600;letter-spacing:.08em;
+  padding:3px 6px;border-radius:4px;background:var(--soft);color:var(--muted);
+}
+.chip.new{background:var(--new);color:#fff}
+.chip.ok{background:#E4F3EC;color:var(--ok)}
+.chip.warn{background:#FBEEDA;color:var(--warn)}
+.chip.bad{background:#F9E7E5;color:var(--bad)}
+.meta{font-size:12px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.meta .dot{opacity:.45}
+.hint{
+  font-size:12.5px;line-height:1.65;color:var(--muted);
+  background:var(--soft);border-radius:10px;padding:11px 12px;
+}
+.hint b{color:var(--ink);font-weight:600}
+.steps{display:flex;gap:5px;margin-bottom:14px}
+.steps i{height:3px;flex:1;border-radius:2px;background:var(--line);font-style:normal}
+.steps i.on{background:var(--acc)}
+.field{
+  width:100%;font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.6;
+  border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--soft);
+  color:var(--ink);resize:vertical;
+}
+.field:focus{outline:2px solid var(--acc);outline-offset:-1px;background:var(--card)}
+.switchrow{display:flex;gap:6px}
+.switchrow button{
+  flex:1;appearance:none;font:inherit;font-size:13px;font-weight:600;padding:10px;
+  border:1px solid var(--line);background:var(--card);color:var(--muted);
+  border-radius:10px;cursor:pointer;
+}
+.switchrow button[aria-pressed="true"]{background:var(--acc);color:#fff;border-color:var(--acc)}
+.countrow{display:flex;gap:6px}
+.countrow button{
+  flex:1;appearance:none;font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;
+  padding:12px 0;border:1px solid var(--line);background:var(--card);color:var(--muted);
+  border-radius:10px;cursor:pointer;
+}
+.countrow button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.check{
+  display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--line);
+  border-radius:11px;cursor:pointer;background:var(--card);
+}
+.check input{margin:2px 0 0;width:18px;height:18px;accent-color:var(--acc);flex:none}
+.check .t{font-size:14px;font-weight:600}
+.check .d{font-size:12px;color:var(--muted);margin-top:2px;line-height:1.5}
+
+/* ── 사진 넣기 ── */
+.dropzone{
+  border:1.5px dashed #C3CBD4;border-radius:14px;background:var(--soft);
+  padding:34px 18px;text-align:center;
+}
+.dz-icon{font-size:34px;line-height:1;margin-bottom:12px}
+.dz-t{font-size:15px;font-weight:600;margin-bottom:6px}
+.dz-d{font-size:12.5px;color:var(--muted);line-height:1.6}
+.photo{background:#23272E;border-radius:14px;padding:16px;position:relative}
+.photo.sm{padding:12px}
+.photo .paper{
+  background:#F7F3EA;color:#2B2620;border-radius:3px;padding:16px 14px;
+  transform:rotate(-1.1deg);box-shadow:0 6px 18px -6px rgba(0,0,0,.55);
+}
+.photo.sm .paper{padding:12px 11px}
+.photo .paper p{margin:0;font-size:13.5px;line-height:1.7;letter-spacing:-.01em}
+.photo.sm .paper p{font-size:12.5px}
+.photo .pnum{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  color:#8C8271;margin-bottom:7px;
+}
+.photo .pline{height:1px;background:#D8CFBE;margin-top:14px}
+.photo .pline.short{width:55%;margin-top:9px}
+.photo-tag{
+  position:absolute;right:10px;bottom:8px;font-family:"IBM Plex Mono",monospace;
+  font-size:9.5px;color:#767D88;letter-spacing:.04em;
+}
+
+/* ── 문제 고르기 카드 ── */
+.pickcard{
+  display:flex;gap:11px;border:1px solid var(--line);border-radius:14px;
+  background:var(--card);padding:13px;cursor:pointer;transition:.14s;
+}
+.pickcard.on{border-color:var(--acc);background:var(--accSoft)}
+.pickcard.bad{border-color:#EFD8AE;background:#FFFBF3}
+.pickcard.bad.on{border-color:var(--acc);background:var(--accSoft)}
+.pk-box{
+  flex:none;width:24px;height:24px;border-radius:7px;border:1.8px solid #C3CBD4;
+  background:#fff;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;margin-top:1px;
+}
+.pickcard.on .pk-box{background:var(--acc);border-color:var(--acc)}
+.pk-main{flex:1;min-width:0}
+
+/* ── 문제 본문 ── */
+.qnum{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  letter-spacing:.1em;color:var(--acc);margin-bottom:7px;
+}
+.qtext{font-size:15.5px;line-height:1.72;letter-spacing:-.01em;margin:0}
+.qtable{width:100%;border-collapse:collapse;margin:12px 0 2px;font-size:13px}
+.qtable th,.qtable td{border:1px solid var(--line);padding:7px 6px;text-align:center}
+.qtable th{background:var(--soft);font-weight:600;font-size:12px}
+.qtable td{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto}
+
+/* ── 분수 표기 ── */
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:-0.42em;margin:0 2px;line-height:1.05}
+.fr .n{font-size:.72em;padding:0 .18em}
+.fr .d{font-size:.72em;padding:0 .18em;border-top:1.4px solid currentColor;margin-top:1px}
+.mx{display:inline-flex;align-items:center;gap:2px;vertical-align:-0.42em}
+
+/* ── 정답 입력 위젯 ── */
+.answerzone{margin-top:18px;padding:16px;border-radius:13px;background:var(--soft);border:1px solid var(--line)}
+.answerzone .lab{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:11px}
+.ansrow{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap}
+.cell{
+  font-family:"IBM Plex Mono",monospace;font-weight:600;text-align:center;
+  border:1.6px solid #C3CBD4;border-radius:9px;background:#fff;color:var(--ink);
+  width:58px;height:52px;font-size:22px;padding:0;
+}
+.cell:focus{outline:0;border-color:var(--acc);box-shadow:0 0 0 3px var(--accSoft)}
+.cell.sm{width:52px;height:44px;font-size:19px}
+.fracbox{display:flex;flex-direction:column;align-items:center;gap:5px}
+.ansrow .cell#c0{align-self:center}
+.fracbox .bar{height:2.5px;width:60px;background:var(--ink);border-radius:2px}
+.dotmark{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:700;transform:translateY(9px)}
+.unit{font-size:19px;font-weight:600;color:var(--muted);margin-left:2px}
+.ansrow.wrong .cell{border-color:var(--bad)}
+.ansrow.right .cell{border-color:var(--ok)}
+
+.verdict{margin-top:14px;border-radius:12px;padding:13px 14px;font-size:14px;line-height:1.6}
+.verdict.right{background:#E9F5EF;color:var(--ok);font-weight:600}
+.verdict.retry{background:#FDF1E4;color:var(--warn);font-weight:600}
+.verdict.reveal{background:#F9EDEC;color:var(--ink)}
+.verdict.reveal .h{color:var(--bad);font-weight:700;margin-bottom:8px}
+.solution{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px}
+.solution .sh{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.02em}
+.solution ol{margin:0;padding-left:19px;font-size:13.5px;line-height:1.85}
+.solution .fin{margin-top:10px;padding:10px 12px;background:var(--accSoft);border-radius:9px;font-size:13.5px;font-weight:600;line-height:1.6}
+
+/* ── 진행바 ── */
+.progress{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.progress .track{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.progress .fill{height:100%;background:var(--acc);border-radius:3px;transition:width .3s}
+.progress .n{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--muted)}
+
+/* ── 결과 ── */
+.scorehero{text-align:center;padding:22px 0 18px}
+.scorehero .big{font-family:"IBM Plex Mono",monospace;font-size:52px;font-weight:600;line-height:1;color:var(--acc)}
+.scorehero .of{font-size:15px;color:var(--muted);margin-top:8px}
+.scorehero .msg{font-size:14px;margin-top:12px;font-weight:600}
+.rrow{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);border-radius:11px}
+.rmark{
+  width:26px;height:26px;border-radius:50%;display:grid;place-items:center;flex:none;
+  font-size:14px;font-weight:700;color:#fff;
+}
+.rmark.o{background:var(--ok)} .rmark.x{background:var(--bad)}
+.rtxt{font-size:13px;line-height:1.5;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ── 코드 공유 ── */
+.codebox{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:1.6;word-break:break-all;
+  background:#12161C;color:#9FE8DC;border-radius:11px;padding:13px;max-height:150px;overflow:auto;
+}
+.kv{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line)}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--muted)}
+.kv .v{font-weight:600;font-family:"IBM Plex Mono",monospace}
+
+/* ── 토스트 ── */
+.toast{
+  position:absolute;left:50%;bottom:84px;transform:translate(-50%,10px);
+  background:#12161C;color:#fff;font-size:13px;font-weight:600;padding:11px 17px;
+  border-radius:10px;opacity:0;pointer-events:none;transition:.22s;z-index:5;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ── 옆 노트 패널 ── */
+.notes{min-width:0;background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:16px;padding:22px}
+.notes h3{font-family:Hahmlet,serif;font-size:19px;margin:0 0 6px;font-weight:600}
+.notes .where{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-accent);margin:0 0 14px}
+.notes p{font-size:14px;line-height:1.75;color:var(--pg-muted);margin:0 0 14px}
+.notes ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.8;color:var(--pg-muted)}
+.notes li b{color:var(--pg-ink);font-weight:600}
+.jump{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px;padding-top:16px;border-top:1px solid var(--pg-line)}
+.jump button{
+  appearance:none;font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  border:1px solid var(--pg-line);background:transparent;color:var(--pg-muted);
+  padding:6px 10px;border-radius:7px;cursor:pointer;
+}
+.jump button:hover{color:var(--pg-ink);border-color:var(--pg-accent)}
+
+/* ── 페이지 푸터 ── */
+.qbox{margin-top:44px;background:var(--pg-surface);border:1px solid var(--pg-line);border-radius:16px;padding:24px}
+.qbox h3{font-family:Hahmlet,serif;font-size:20px;margin:0 0 16px;font-weight:600}
+.qbox ol{margin:0;padding-left:20px;font-size:14.5px;line-height:1.85;color:var(--pg-muted)}
+.qbox li{margin-bottom:9px}
+.qbox li b{color:var(--pg-ink);font-weight:600}
+.stamp{margin-top:26px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--pg-muted);text-align:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">UI 미리보기 · 동작 시나리오 프로토타입</p>
+  <h1 class="page">초연이의 수학문제 생성기</h1>
+  <p class="lede">
+    아빠 앱과 초연이 앱의 <b>메뉴 구성·버튼·문제 표기</b>를 실제로 눌러보며 확인하는 미리보기입니다.
+    화면 이동과 정답 채점은 실제로 동작하고, AI 호출·카톡 공유·저장만 흉내입니다.
+    문제 내용은 <b>임의 샘플</b>이며, 정답 입력칸 4종류(정수·분수·대분수·소수)를 다 보여드리려고 일부러 유형을 섞어놨습니다.
+  </p>
+
+  <div class="apptabs" role="tablist">
+    <button class="apptab" role="tab" aria-selected="true" data-app="parent">아빠 앱 · 문제 만들기</button>
+    <button class="apptab" role="tab" aria-selected="false" data-app="kid">초연이 앱 · 문제 풀기</button>
+  </div>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="screen" id="screen" data-app="parent">
+        <div class="statusbar"><span>9:41</span><span>▲ ▮▮▮ 84%</span></div>
+        <div id="chrome"></div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </div>
+    <aside class="notes" id="notes"></aside>
+  </div>
+
+  <div class="qbox">
+    <h3>이 미리보기에서 봐주셨으면 하는 것</h3>
+    <ol>
+      <li><b>아빠 앱 3단계(검토) 화면</b> — 검산 불일치 경고와 [빼기] 흐름이 쓸 만한지. 5번 문제를 일부러 틀리게 넣어놨습니다.</li>
+      <li><b>정답 입력칸 크기</b> — S21(360px) 기준으로 맞췄습니다. 분수 칸이 손가락으로 누르기에 충분한지, 폴드 펼쳤을 때 안 늘어지는지.</li>
+      <li><b>단위 라벨 위치</b> — 입력칸 오른쪽 회색 글씨. 1번 문제가 mL로 서술되고 L로 답하는 케이스입니다.</li>
+      <li><b>오답 → 재시도 → 공개</b> 흐름 — 일부러 틀리게 넣고 [확인]을 눌러보세요.</li>
+      <li><b>문제 글자 크기와 줄간격</b> — 5번은 표가 들어간 문제입니다.</li>
+      <li><b>홈 화면 이력 카드</b> — 파란 테두리 + NEW 배지로 신규 구분.</li>
+    </ol>
+  </div>
+
+  <p class="stamp">CHOBLY MATH · UI PREVIEW · v0.1</p>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   샘플 데이터
+   ══════════════════════════════════════════════ */
+
+// 사진에서 인식된 원본 문제
+const ORIGIN = {
+  text: "우유가 한 병에 500 mL씩 들어 있습니다. 6병에 들어 있는 우유는 모두 몇 L입니까?",
+  answer: "3 L", check: "500 × 6 ÷ 1000 = 3"
+};
+
+// 생성된 문제 (아빠 앱 검토 화면용 — 5번은 일부러 검산 불일치)
+const GENERATED = [
+  { t:"주스가 한 병에 750 mL씩 들어 있습니다. 4병에 들어 있는 주스는 모두 몇 L입니까?",
+    a:"3 L", c:"750 × 4 ÷ 1000 = 3", ok:true },
+  { t:"물통에 물이 [f:3/4] L 들어 있었습니다. 그중 [f:1/3] L를 사용했다면 남은 물은 몇 L입니까?",
+    a:"[f:5/12] L", c:"3/4 − 1/3 = 9/12 − 4/12 = 5/12", ok:true },
+  { t:"리본 한 개의 길이가 [m:2,1,4] m입니다. 똑같은 리본 3개의 길이를 모두 더하면 몇 m입니까?",
+    a:"[m:6,3,4] m", c:"9/4 × 3 = 27/4 = 6.75", ok:true },
+  { t:"밀가루 한 봉지의 무게는 0.75 kg입니다. 3봉지의 무게는 모두 몇 kg입니까?",
+    a:"2.25 kg", c:"0.75 × 3 = 2.25", ok:true },
+  { t:"페인트 한 통으로 벽 1.4 m²를 칠할 수 있습니다. 5통으로는 몇 m²를 칠할 수 있습니까?",
+    a:"7.5 m²", c:"1.4 × 5 = 7", ok:false }
+];
+
+// 초연이 앱이 푸는 문제 (입력칸 4종류를 다 보여주려고 유형을 섞음)
+const QUIZ = [
+  {
+    q:"주스가 한 병에 750 mL씩 들어 있습니다. 4병에 들어 있는 주스는 모두 몇 L입니까?",
+    type:"int", unit:"L", value:3, show:"3",
+    steps:["한 병에 들어 있는 주스는 750 mL입니다.",
+           "4병에 들어 있는 주스는 750 × 4 = 3000 (mL)입니다.",
+           "1 L = 1000 mL이므로 3000 mL = 3000 ÷ 1000 = 3 (L)입니다."],
+    fin:"따라서 4병에 들어 있는 주스는 모두 3 L입니다."
+  },
+  {
+    q:"물통에 물이 [f:3/4] L 들어 있었습니다. 그중 [f:1/3] L를 사용했다면 남은 물은 몇 L입니까?",
+    type:"frac", unit:"L", value:5/12, show:"[f:5/12]",
+    steps:["처음 들어 있던 물의 양은 [f:3/4] L입니다.",
+           "사용한 물의 양은 [f:1/3] L입니다.",
+           "남은 물의 양은 [f:3/4] − [f:1/3] 입니다.",
+           "분모를 12로 통분하면 [f:9/12] − [f:4/12] = [f:5/12] 입니다."],
+    fin:"따라서 남은 물은 [f:5/12] L입니다."
+  },
+  {
+    q:"리본 한 개의 길이가 [m:2,1,4] m입니다. 똑같은 리본 3개의 길이를 모두 더하면 몇 m입니까?",
+    type:"mixed", unit:"m", value:6.75, show:"[m:6,3,4]",
+    steps:["리본 한 개의 길이 [m:2,1,4] m를 가분수로 고치면 [f:9/4] m입니다.",
+           "리본이 3개이므로 [f:9/4] × 3 = [f:27/4] (m)입니다.",
+           "[f:27/4] 를 대분수로 고치면 27 ÷ 4 = 6 … 3 이므로 [m:6,3,4] 입니다."],
+    fin:"따라서 리본 3개의 길이는 모두 [m:6,3,4] m입니다."
+  },
+  {
+    q:"밀가루 한 봉지의 무게는 0.75 kg입니다. 3봉지의 무게는 모두 몇 kg입니까?",
+    type:"dec", unit:"kg", value:2.25, show:"2.25",
+    steps:["한 봉지의 무게는 0.75 kg입니다.",
+           "3봉지의 무게는 0.75 × 3 입니다.",
+           "75 × 3 = 225 이고, 0.75는 소수 두 자리 수이므로 0.75 × 3 = 2.25 입니다."],
+    fin:"따라서 3봉지의 무게는 모두 2.25 kg입니다."
+  },
+  {
+    q:"다음은 초연이네 모둠 학생 5명이 지난주에 읽은 책의 수입니다. 5명이 읽은 책의 수의 평균은 몇 권입니까?",
+    table:{ head:["지민","서연","초연","하준","민서"], row:["4","7","5","9","5"], caption:"읽은 책의 수(권)" },
+    type:"int", unit:"권", value:6, show:"6",
+    steps:["5명이 읽은 책의 수를 모두 더하면 4 + 7 + 5 + 9 + 5 = 30 (권)입니다.",
+           "학생 수는 5명입니다.",
+           "평균은 (전체 합) ÷ (자료의 수) 이므로 30 ÷ 5 = 6 (권)입니다."],
+    fin:"따라서 5명이 읽은 책의 수의 평균은 6권입니다."
+  }
+];
+
+const SHARECODE = "CHOBLY-1:eJyNVE1v2zAM/SuCzk2R2E4c9zZg2GHYgGHdaSgGxlYSY7bkSXK7oOh/HynZTtplwC5xRIrv8ZFP0jNvjHVVv+dX/Fa7ppb8vRTC7Rvxvubg3EGb1r2yV/EmXcbLZbxK4jSJk1WSJvE6XcXZOl2n8SZbLdMkidNVEmdxlqXpJs2ydZqm2WKzXqRJukiSJEkX8Xq5SBfLdZLGWZzlWbxK4jhOFmm+SBZZmuVZFmerRZbGSbZKklWSpUmerbNVEudZli7SLM7ymTVCVvfSGKZLZv1uJwtnhbVMKC3+MB3S6L6Fh1rC5FeDPy0hI/wnKX7wl8ea1JmqYCTKLQXygyJ6iQzYfYt2lM";
+
+/* ══════════════════════════════════════════════
+   유틸 — 분수 표기 파서
+   [f:3/4] → 진짜 분수 / [m:2,1,4] → 대분수
+   ══════════════════════════════════════════════ */
+function fmt(s){
+  return String(s)
+    .replace(/\[f:(-?\d+)\/(\d+)\]/g, '<span class="fr"><span class="n">$1</span><span class="d">$2</span></span>')
+    .replace(/\[m:(-?\d+),(\d+),(\d+)\]/g,
+      '<span class="mx"><span>$1</span><span class="fr"><span class="n">$2</span><span class="d">$3</span></span></span>');
+}
+const $ = id => document.getElementById(id);
+
+/* ══════════════════════════════════════════════
+   상태
+   ══════════════════════════════════════════════ */
+const S = {
+  app:"parent",
+  p:{ screen:"home", count:5, withSol:true, ai:"claude",
+     photo:false, read:false, gen:false, picked:[], shared:false },
+  k:{ screen:"home", idx:0, tries:0, phase:"input", results:[], order:[0,1,2,3,4], loaded:false }
+};
+
+function toast(msg){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),1600);
+}
+function copy(text,msg){
+  try{ navigator.clipboard.writeText(text); }catch(e){}
+  toast(msg||"복사했습니다");
+}
+
+/* ══════════════════════════════════════════════
+   아빠 앱 화면
+   ══════════════════════════════════════════════ */
+const P = {};
+
+const aiName = () => S.p.ai==="claude" ? "Claude" : "ChatGPT";
+
+/* 촬영한 교재 사진 목업 */
+function photoBox(small){
+  return `<div class="photo ${small?'sm':''}">
+    <div class="paper">
+      <div class="pnum">5</div>
+      <p>우유가 한 병에 500 mL씩 들어 있습니다.<br>6병에 들어 있는 우유는 모두 몇 L입니까?</p>
+      <div class="pline"></div><div class="pline short"></div>
+    </div>
+    <div class="photo-tag">IMG_2481.jpg</div>
+  </div>`;
+}
+
+P.home = () => ({
+  head:{ title:"초연이의 수학문제 생성기", sub:"아빠용 · 문제 만들기", badge:"PARENT" },
+  body:`
+    <button class="btn btn-primary btn-full" style="padding:17px" onclick="startNew()">＋ 새 문제 만들기</button>
+    <p class="sect-label" style="margin-top:24px">최근 만든 문제 · 5개까지 보관</p>
+    <div class="stack">
+      ${S.p.shared ? histCard("오늘","들이 단위 바꾸기",4,true,true) : ""}
+      ${histCard("8월 19일","분수의 뺄셈",5,true,false)}
+      ${histCard("8월 17일","소수의 곱셈",4,false,false)}
+      ${histCard("8월 14일","평균 구하기",5,true,false)}
+      ${histCard("8월 11일","약수와 배수",3,false,false)}
+      ${S.p.shared ? "" : histCard("8월 8일","대분수의 덧셈",5,true,false)}
+    </div>
+    <p class="hint" style="margin-top:18px">
+      6번째 문제가 만들어지면 가장 오래된 것이 자동으로 지워집니다.
+    </p>`,
+  foot:`<button class="btn btn-ghost btn-full" onclick="toast('설정: AI 선택 / 앱 정보 / 이력 비우기')">⚙︎ 설정</button>`
+});
+
+function histCard(date,title,n,sol,isNew){
+  return `<div class="card ${isNew?'is-new':''}">
+    <div class="hist-top">
+      <span class="hist-title">${title}</span>
+      ${isNew?'<span class="chip new">NEW</span>':''}
+    </div>
+    <div class="meta">
+      <span>${date}</span><span class="dot">·</span><span>${n}문제</span>
+      <span class="dot">·</span><span>${sol?'풀이 포함':'풀이 없음'}</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:11px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('문제와 원본 사진을 다시 봅니다')">문제 보기</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="toast('카톡 공유창이 열립니다')">카톡으로 보내기</button>
+    </div>
+  </div>`;
+}
+
+/* ── 1단계 · 사진 넣기 ── */
+P.shot = () => ({
+  head:{ title:"1단계 · 문제 사진 넣기", sub:"카톡으로 받은 사진을 고르세요", back:"home" },
+  body:`
+    <div class="steps"><i class="on"></i><i></i><i></i><i></i><i></i></div>
+    ${S.p.photo ? photoBox() : `<div class="dropzone">
+        <div class="dz-icon">📷</div>
+        <div class="dz-t">문제 사진을 넣어주세요</div>
+        <div class="dz-d">초연이가 카톡으로 보낸 사진은<br>갤러리에 들어 있습니다</div>
+      </div>`}
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="pickPhoto()">🖼 갤러리에서 고르기</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="pickPhoto()">📷 바로 촬영</button>
+    </div>
+    ${S.p.photo?`
+      <p class="sect-label" style="margin-top:24px">어떤 AI를 쓸까요</p>
+      <div class="switchrow">
+        <button aria-pressed="${S.p.ai==='claude'}" onclick="setAI('claude')">Claude</button>
+        <button aria-pressed="${S.p.ai==='gpt'}" onclick="setAI('gpt')">ChatGPT</button>
+      </div>
+      <p class="hint" style="margin-top:14px">
+        이번 요청은 <b>문제를 읽고 푸는 것까지만</b>입니다.<br>
+        새 문제는 아빠가 확인한 다음에 만듭니다.
+      </p>
+      <div class="stack" style="margin-top:12px">
+        <button class="btn btn-primary btn-full" onclick="copy('READ_PROMPT','읽기 요청을 복사했습니다')">📋 읽기 요청 복사하기</button>
+        <button class="btn btn-ghost btn-full" onclick="toast(aiName()+' 앱이 열립니다 · 사진 첨부 후 붙여넣기')">${aiName()} 앱 열기 →</button>
+      </div>`:""}`,
+  foot:`<button class="btn btn-primary btn-full" ${S.p.photo?"":"disabled"} onclick="go('p','confirm')">
+          ${S.p.photo?"다음 · 읽은 결과 확인 →":"먼저 사진을 넣어주세요"}</button>`
+});
+
+/* ── 2단계 · 인식 확인 (게이트) ── */
+P.confirm = () => ({
+  head:{ title:"2단계 · 인식 확인", sub:"제대로 읽고 풀었는지 확인", back:"shot" },
+  body:`
+    <div class="steps"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div>
+    <textarea class="field" rows="${S.p.read?3:8}" placeholder="${aiName()} 답변을 여기에 붙여넣으세요&#10;&#10;앞뒤에 설명이 섞여 있어도 괜찮습니다.">${S.p.read?'{"text":"우유가 한 병에 500 mL씩 들어 있습니다. 6병에 들어 있는 우유는 모두 몇 L입니까?","answer":"3","unit":"L","check":"500*6/1000"}':''}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="doRead()">📥 붙여넣기</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="S.p.read=false;render()">지우기</button>
+    </div>
+    ${S.p.read?`
+      <p class="sect-label" style="margin-top:22px">사진 ↔ 읽어낸 문제</p>
+      ${photoBox(true)}
+      <div class="card" style="margin-top:10px">
+        <div class="qnum" style="margin-bottom:8px">읽어낸 문제 · 고칠 수 있어요</div>
+        <textarea class="field" rows="3"
+          style="font-family:'IBM Plex Sans KR',sans-serif;font-size:14px;line-height:1.65;background:#fff">${ORIGIN.text}</textarea>
+        <div class="meta" style="margin-top:12px">
+          <span>AI가 낸 답</span><span class="dot">·</span>
+          <b style="color:var(--ink);font-size:16px;font-family:'IBM Plex Mono',monospace">${ORIGIN.answer}</b>
+          <span class="chip ok" style="margin-left:auto">검산 일치</span>
+        </div>
+        <div class="meta" style="margin-top:5px;font-family:'IBM Plex Mono',monospace;font-size:11.5px">${ORIGIN.check}</div>
+      </div>
+      <p class="hint" style="margin-top:12px">
+        글자를 잘못 읽었으면 <b>위 상자에서 직접 고치세요.</b> 고친 문장이 다음 요청에 그대로 들어갑니다.
+      </p>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="go('p','shot')">사진부터 다시</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="copy('READ_PROMPT','같은 사진으로 다시 읽는 요청을 복사했습니다')">다시 읽어달라기</button>
+      </div>`
+    :`<p class="hint" style="margin-top:16px">
+        ${aiName()}가 <b>문제를 읽고 푼 결과</b>를 붙여넣으면, 원본 사진과 나란히 놓고 확인할 수 있습니다.
+      </p>`}`,
+  foot:`<button class="btn btn-primary btn-full" ${S.p.read?"":"disabled"} onclick="okConfirm()">
+          ${S.p.read?"✓ 맞습니다 · 문제 만들기 →":"결과를 붙여넣어 주세요"}</button>`
+});
+
+/* ── 3단계 · 생성 요청 ── */
+P.make = () => ({
+  head:{ title:"3단계 · 문제 만들기 요청", sub:"확인된 문제와 같은 유형으로", back:"confirm" },
+  body:`
+    <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+    <div class="card" style="border-color:var(--ok);background:#F2FAF6">
+      <div class="hist-top"><span class="hist-title" style="color:var(--ok)">✓ 확인 끝난 문제</span></div>
+      <p class="qtext" style="font-size:13.5px;margin-top:4px">${ORIGIN.text}</p>
+      <div class="meta" style="margin-top:9px"><span>정답</span><span class="dot">·</span>
+        <b style="color:var(--ink);font-family:'IBM Plex Mono',monospace">${ORIGIN.answer}</b></div>
+    </div>
+
+    <p class="sect-label" style="margin-top:22px">몇 문제를 만들까요</p>
+    <div class="countrow">
+      ${[1,2,3,4,5].map(n=>`<button aria-pressed="${S.p.count===n}" onclick="setCount(${n})">${n}</button>`).join("")}
+    </div>
+
+    <p class="sect-label" style="margin-top:22px">풀이</p>
+    <label class="check" onclick="setTimeout(()=>toggleSol(),0)">
+      <input type="checkbox" ${S.p.withSol?"checked":""}>
+      <span><span class="t">풀이도 같이 만들기</span>
+      <span class="d">초연이 앱에 풀이가 저장되어 인터넷 없이도 바로 뜹니다. 대신 보낼 코드가 조금 길어집니다.</span></span>
+    </label>
+
+    <div class="stack" style="margin-top:22px">
+      <button class="btn btn-primary btn-full" onclick="copy('MAKE_PROMPT','생성 요청을 복사했습니다')">📋 생성 요청 복사하기</button>
+      <button class="btn btn-ghost btn-full" onclick="toast('아까 그 대화에 이어서 붙여넣으세요')">${aiName()} 앱 열기 →</button>
+    </div>
+    <p class="hint" style="margin-top:16px">
+      <b>사진은 다시 안 올려도 됩니다.</b> 확인된 문제 글이 요청 안에 들어갑니다.
+      아까 그 대화에 <b>이어서 붙여넣기</b>만 하세요.
+    </p>`,
+  foot:`<button class="btn btn-primary btn-full" onclick="go('p','pick')">다음 · 만들어진 문제 보기 →</button>`
+});
+
+/* ── 4단계 · 조회하고 고르기 ── */
+P.pick = () => {
+  const n = S.p.picked.length;
+  return {
+    head:{ title:"4단계 · 문제 고르기", sub:S.p.gen?`${n}개 선택됨`:"만들어진 문제를 붙여넣으세요", back:"make" },
+    body:`
+      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+      <textarea class="field" rows="${S.p.gen?3:8}" placeholder="만들어진 문제를 여기에 붙여넣으세요">${S.p.gen?'{"problems":[{"text":"주스가 한 병에 750 mL…","answer":"3","unit":"L","check":"750*4/1000"}, … 5개 … ]}':''}</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="doGen()">📥 붙여넣기</button>
+        <button class="btn btn-ghost btn-sm" style="flex:1" onclick="S.p.gen=false;S.p.picked=[];render()">지우기</button>
+      </div>
+      ${S.p.gen?`
+        <p class="sect-label" style="margin-top:22px">만들어진 문제 ${GENERATED.length}개 · 보낼 것만 체크</p>
+        <div class="stack">${GENERATED.map((g,i)=>pickCard(g,i)).join("")}</div>
+        <p class="hint" style="margin-top:14px">
+          앱이 AI가 준 식을 직접 계산해서 답과 대조합니다.
+          <b>검산이 안 맞는 문제는 체크를 미리 풀어</b> 놓았습니다.
+        </p>`
+      :`<p class="hint" style="margin-top:16px">
+          붙여넣으면 문제를 하나씩 보면서 <b>초연이에게 보낼 것만</b> 고를 수 있습니다.
+        </p>`}`,
+    foot:`<button class="btn btn-primary btn-full" ${n?"":"disabled"} onclick="go('p','send')">
+            ${n?`${n}문제 내보내기 →`:"보낼 문제를 골라주세요"}</button>`
+  };
+};
+
+function pickCard(g,i){
+  const on = S.p.picked.includes(i);
+  return `<div class="pickcard ${on?'on':''} ${g.ok?'':'bad'}" onclick="togglePick(${i})">
+    <div class="pk-box">${on?'✓':''}</div>
+    <div class="pk-main">
+      <div class="hist-top" style="margin-bottom:4px">
+        <span class="qnum" style="margin:0">Q${i+1}</span>
+        <span class="chip ${g.ok?'ok':'warn'}" style="margin-left:auto">${g.ok?'검산 일치':'검산 불일치'}</span>
+      </div>
+      <p class="qtext" style="font-size:14px">${fmt(g.t)}</p>
+      <div class="meta" style="margin-top:9px">
+        <span>정답</span><span class="dot">·</span><b style="color:var(--ink);font-size:14px">${fmt(g.a)}</b>
+      </div>
+      <div class="meta" style="margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+           color:${g.ok?'var(--muted)':'var(--bad)'}">${g.c}${g.ok?'':'  ← 답과 다름'}</div>
+      <button class="btn btn-ghost btn-sm btn-full" style="margin-top:10px"
+        onclick="event.stopPropagation();toast('이 문제만 다시 만드는 요청을 복사합니다')">이 문제만 다시 만들기</button>
+    </div>
+  </div>`;
+}
+
+/* ── 5단계 · 내보내기 ── */
+P.send = () => {
+  const n = S.p.picked.length;
+  return {
+    head:{ title:"5단계 · 초연이에게 보내기", sub:`${n}문제`, back:"pick" },
+    body:`
+      <div class="steps"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+      <div class="card">
+        <div class="kv"><span class="k">보낼 문제</span><span class="v">${n}문제</span></div>
+        <div class="kv"><span class="k">풀이</span><span class="v">${S.p.withSol?"포함":"없음"}</span></div>
+        <div class="kv"><span class="k">코드 길이</span><span class="v">${S.p.withSol?(0.28*n+0.2).toFixed(1):(0.12*n+0.1).toFixed(1)} KB</span></div>
+        <div class="kv"><span class="k">카톡 한 번에</span><span class="v" style="color:var(--ok)">보낼 수 있음</span></div>
+      </div>
+      <p class="sect-label" style="margin-top:20px">보낼 코드</p>
+      <div class="codebox">${SHARECODE}…</div>
+      <div class="stack" style="margin-top:14px">
+        <button class="btn btn-primary btn-full" onclick="doShare()">💬 카톡으로 보내기</button>
+        <button class="btn btn-ghost btn-full" onclick="copy(SHARECODE,'코드를 복사했습니다')">📋 코드만 복사</button>
+      </div>
+      <p class="hint" style="margin-top:16px">
+        초연이가 카톡에서 <b>이 메시지를 길게 눌러 전체 복사</b>한 뒤,
+        자기 앱에서 [문제 불러오기]에 붙여넣으면 됩니다.
+      </p>`,
+    foot:`<button class="btn btn-ghost btn-full" onclick="finishParent()">완료 · 홈으로</button>`
+  };
+};
+
+/* ══════════════════════════════════════════════
+   초연이 앱 화면
+   ══════════════════════════════════════════════ */
+const K = {};
+
+K.home = () => ({
+  head:{ title:"초연이의 수학문제", sub:"아빠가 보내준 문제 풀기", badge:"CHOYEON" },
+  body:`
+    <button class="btn btn-primary btn-full" style="padding:17px" onclick="go('k','load')">📥 문제 불러오기</button>
+    <p class="sect-label" style="margin-top:24px">받은 문제 · 5개까지 보관</p>
+    <div class="stack">
+      <div class="card is-new">
+        <div class="hist-top"><span class="hist-title">들이 단위 바꾸기</span><span class="chip new">NEW</span></div>
+        <div class="meta"><span>오늘</span><span class="dot">·</span><span>5문제</span>
+          <span class="dot">·</span><span>아직 안 풀었어요</span></div>
+        <button class="btn btn-primary btn-sm btn-full" style="margin-top:11px" onclick="startQuiz('all')">풀기 시작 →</button>
+      </div>
+      <div class="card">
+        <div class="hist-top"><span class="hist-title">분수의 뺄셈</span><span class="chip bad">2개 틀림</span></div>
+        <div class="meta"><span>8월 19일</span><span class="dot">·</span><span>5문제 중 3개 정답</span></div>
+        <div style="display:flex;gap:6px;margin-top:11px">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="startQuiz('wrong')">틀린 것만 다시</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="startQuiz('all')">전체 다시</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hist-top"><span class="hist-title">소수의 곱셈</span><span class="chip ok">다 맞음</span></div>
+        <div class="meta"><span>8월 17일</span><span class="dot">·</span><span>4문제 중 4개 정답</span></div>
+        <button class="btn btn-ghost btn-sm btn-full" style="margin-top:11px" onclick="startQuiz('all')">전체 다시 풀기</button>
+      </div>
+      <div class="card">
+        <div class="hist-top"><span class="hist-title">평균 구하기</span><span class="chip bad">1개 틀림</span></div>
+        <div class="meta"><span>8월 14일</span><span class="dot">·</span><span>5문제 중 4개 정답</span></div>
+        <div style="display:flex;gap:6px;margin-top:11px">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="startQuiz('wrong')">틀린 것만 다시</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="startQuiz('all')">전체 다시</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hist-top"><span class="hist-title">약수와 배수</span><span class="chip ok">다 맞음</span></div>
+        <div class="meta"><span>8월 11일</span><span class="dot">·</span><span>3문제 중 3개 정답</span></div>
+        <button class="btn btn-ghost btn-sm btn-full" style="margin-top:11px" onclick="startQuiz('all')">전체 다시 풀기</button>
+      </div>
+    </div>`,
+  foot:`<button class="btn btn-ghost btn-full" onclick="toast('앱 정보 · 글자 크기 · 이력 비우기')">⚙︎ 설정</button>`
+});
+
+K.load = () => ({
+  head:{ title:"문제 불러오기", sub:"카톡에서 복사한 코드를 붙여넣으세요", back:"home" },
+  body:`
+    <textarea class="field" rows="8" id="kidbox" placeholder="여기에 붙여넣기&#10;&#10;CHOBLY-1: 로 시작하는 긴 글자예요">${S.k.loaded?SHARECODE.slice(0,180)+"…":""}</textarea>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="kidPaste()">📥 붙여넣기</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="S.k.loaded=false;render()">지우기</button>
+    </div>
+    ${S.k.loaded?`<div class="card" style="margin-top:16px;border-color:var(--ok);background:#F2FAF6">
+      <div class="hist-top"><span class="hist-title" style="color:var(--ok)">✓ 문제를 찾았어요</span></div>
+      <div class="meta"><span>들이 단위 바꾸기</span><span class="dot">·</span><span>5문제</span>
+        <span class="dot">·</span><span>풀이 있음</span></div>
+    </div>`:`<p class="hint" style="margin-top:16px">
+      카톡에서 아빠가 보낸 메시지를 <b>길게 눌러 [복사]</b>한 다음 여기에 붙여넣으면 돼요.
+    </p>`}`,
+  foot:`<button class="btn btn-primary btn-full" ${S.k.loaded?"":"disabled"} onclick="startQuiz('all')">
+          ${S.k.loaded?"이 문제 풀기 →":"코드를 붙여넣어 주세요"}</button>`
+});
+
+K.quiz = () => {
+  const qi = S.k.order[S.k.idx];
+  const q = QUIZ[qi];
+  const done = S.k.phase !== "input";
+  return {
+    head:{ title:"들이 단위 바꾸기", sub:`${S.k.idx+1}번째 문제`, back:"home" },
+    body:`
+      <div class="progress">
+        <div class="track"><div class="fill" style="width:${(S.k.idx)/S.k.order.length*100}%"></div></div>
+        <span class="n">${S.k.idx+1} / ${S.k.order.length}</span>
+      </div>
+
+      <div class="qnum">문제 ${S.k.idx+1}</div>
+      <p class="qtext">${fmt(q.q)}</p>
+      ${q.table?`<div class="tablewrap"><table class="qtable">
+        <caption style="caption-side:top;font-size:11.5px;color:var(--muted);text-align:left;padding-bottom:6px">${q.table.caption}</caption>
+        <tr>${q.table.head.map(h=>`<th>${h}</th>`).join("")}</tr>
+        <tr>${q.table.row.map(r=>`<td>${r}</td>`).join("")}</tr>
+      </table></div>`:""}
+
+      <div class="answerzone">
+        <div class="lab">${S.k.tries===0?"답을 써 보세요":"한 번 더 풀어볼까요?"}</div>
+        <div class="ansrow ${S.k.phase==='right'?'right':(S.k.phase==='retry'||S.k.phase==='reveal')?'wrong':''}" id="ansrow">
+          ${widget(q)}
+          <span class="unit">${q.unit}</span>
+        </div>
+      </div>
+
+      ${S.k.phase==="right"?`<div class="verdict right">🎉 정답이에요!</div>`:""}
+      ${S.k.phase==="retry"?`<div class="verdict retry">아쉬워요. 한 번 더 기회를 줄게요!</div>`:""}
+      ${S.k.phase==="reveal"?`<div class="verdict reveal">
+        <div class="h">정답은 ${fmt(q.show)} ${q.unit}이에요</div>
+        <div class="solution">
+          <div class="sh">이렇게 풀어요</div>
+          <ol>${q.steps.map(s=>`<li>${fmt(s)}</li>`).join("")}</ol>
+          <div class="fin">${fmt(q.fin)}</div>
+        </div></div>`:""}
+
+      ${(S.k.phase==="right")?`<details style="margin-top:12px">
+        <summary style="font-size:13px;color:var(--muted);cursor:pointer;padding:8px 0">풀이 보기</summary>
+        <div class="solution" style="border-top:0;padding-top:4px">
+          <ol>${q.steps.map(s=>`<li>${fmt(s)}</li>`).join("")}</ol>
+          <div class="fin">${fmt(q.fin)}</div>
+        </div></details>`:""}
+      <div style="height:8px"></div>`,
+    foot: done
+      ? `<button class="btn btn-primary btn-full" onclick="nextQ()">${S.k.idx+1<S.k.order.length?"다음 문제 →":"결과 보기 →"}</button>`
+      : `<button class="btn btn-primary btn-full" onclick="grade()">확인</button>`
+  };
+};
+
+function widget(q){
+  const d = S.k.phase!=="input";
+  const dis = d?"disabled":"";
+  if(q.type==="int")  return `<input class="cell" id="c1" inputmode="numeric" ${dis}>`;
+  if(q.type==="dec")  return `<input class="cell" id="c1" inputmode="numeric" ${dis}>
+                              <span class="dotmark">.</span>
+                              <input class="cell" id="c2" inputmode="numeric" ${dis}>`;
+  if(q.type==="frac") return `<div class="fracbox">
+                                <input class="cell sm" id="c1" inputmode="numeric" ${dis}>
+                                <div class="bar"></div>
+                                <input class="cell sm" id="c2" inputmode="numeric" ${dis}>
+                              </div>`;
+  return `<input class="cell" id="c0" inputmode="numeric" ${dis}>
+          <div class="fracbox">
+            <input class="cell sm" id="c1" inputmode="numeric" ${dis}>
+            <div class="bar"></div>
+            <input class="cell sm" id="c2" inputmode="numeric" ${dis}>
+          </div>`;
+}
+
+function grade(){
+  const q = QUIZ[S.k.order[S.k.idx]];
+  const v = id => { const e=$(id); return e && e.value.trim()!=="" ? Number(e.value) : null; };
+  let got = null;
+  if(q.type==="int")  got = v('c1');
+  if(q.type==="dec"){ const a=$('c1').value.trim(), b=$('c2').value.trim();
+                      if(a!==""||b!=="") got = Number((a||"0")+"."+(b||"0")); }
+  if(q.type==="frac"){ const n=v('c1'), d2=v('c2'); if(n!==null&&d2) got = n/d2; }
+  if(q.type==="mixed"){ const w=v('c0')||0, n=v('c1'), d2=v('c2'); if(n!==null&&d2) got = w + n/d2; }
+
+  if(got===null){ toast("답을 먼저 써 주세요"); return; }
+  // 값이 같으면 정답 — 약분 안 해도, 가분수로 써도 통과
+  const right = Math.abs(got - q.value) < 1e-9;
+
+  if(right){ S.k.phase="right"; S.k.results[S.k.idx]=true; }
+  else if(S.k.tries===0){ S.k.tries=1; S.k.phase="retry"; }
+  else { S.k.phase="reveal"; S.k.results[S.k.idx]=false; }
+  render();
+  if(S.k.phase==="retry"){ setTimeout(()=>{ S.k.phase="input"; render(); setTimeout(()=>{const f=$('c1')||$('c0'); f&&f.focus();},50); },1100); }
+}
+
+function nextQ(){
+  if(S.k.idx+1 < S.k.order.length){ S.k.idx++; S.k.tries=0; S.k.phase="input"; }
+  else { S.k.screen="result"; }
+  render();
+}
+
+K.result = () => {
+  const n = S.k.order.length, ok = S.k.results.filter(Boolean).length;
+  const msg = ok===n ? "다 맞았어요! 대단해요 🎉" : ok>=n*0.6 ? "잘했어요! 틀린 것만 다시 볼까요?" : "괜찮아요. 다시 한 번 해봐요!";
+  return {
+    head:{ title:"결과", sub:"들이 단위 바꾸기", back:"home" },
+    body:`
+      <div class="scorehero">
+        <div class="big">${ok}<span style="font-size:26px;color:var(--muted)"> / ${n}</span></div>
+        <div class="of">${n}문제 중 ${ok}개 정답</div>
+        <div class="msg">${msg}</div>
+      </div>
+      <div class="stack">
+        ${S.k.order.map((qi,i)=>`<div class="rrow">
+          <span class="rmark ${S.k.results[i]?'o':'x'}">${S.k.results[i]?'○':'✕'}</span>
+          <span class="rtxt">${i+1}. ${fmt(QUIZ[qi].q).replace(/<[^>]+>/g,"").slice(0,26)}…</span>
+          <button class="btn btn-ghost btn-sm" onclick="toast('풀이를 봅니다')">풀이</button>
+        </div>`).join("")}
+      </div>`,
+    foot:`<div style="display:flex;flex-direction:column;gap:8px;width:100%;min-width:0">
+      ${ok<n?`<button class="btn btn-primary btn-full" onclick="startQuiz('wrongNow')">틀린 문제만 다시 풀기</button>`:""}
+      <div style="display:flex;gap:8px;min-width:0">
+        <button class="btn btn-ghost" style="flex:1" onclick="startQuiz('all')">전체 다시 풀기</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="go('k','home')">홈으로</button>
+      </div>
+    </div>`
+  };
+};
+
+/* ══════════════════════════════════════════════
+   동작
+   ══════════════════════════════════════════════ */
+function go(app,screen){ S[app].screen=screen; render(); }
+function startNew(){ S.p.photo=false; S.p.read=false; S.p.gen=false; S.p.picked=[]; S.p.screen="shot"; render(); }
+function pickPhoto(){ S.p.photo=true; render(); toast("사진을 넣었습니다"); }
+function doRead(){ S.p.read=true; render(); toast("읽은 결과를 붙여넣었습니다"); }
+function okConfirm(){ S.p.screen="make"; render(); toast("확인 완료 · 이제 문제를 만듭니다"); }
+function setCount(n){ S.p.count=n; render(); }
+function toggleSol(){ S.p.withSol=!S.p.withSol; render(); }
+function setAI(a){ S.p.ai=a; render(); }
+function doGen(){
+  S.p.gen=true;
+  S.p.picked = GENERATED.map((g,i)=>g.ok?i:-1).filter(i=>i>=0);   // 검산 안 맞는 건 체크 해제
+  render(); toast(GENERATED.length+"문제를 불러왔습니다");
+}
+function togglePick(i){
+  S.p.picked = S.p.picked.includes(i) ? S.p.picked.filter(x=>x!==i) : S.p.picked.concat(i).sort();
+  render();
+}
+function doShare(){ S.p.shared=true; toast("카톡 공유창이 열립니다"); }
+function finishParent(){ S.p.shared=true; S.p.screen="home"; render(); }
+function kidPaste(){ S.k.loaded=true; render(); toast("코드를 붙여넣었어요"); }
+
+function startQuiz(mode){
+  if(mode==="wrongNow") S.k.order = S.k.order.filter((_,i)=>!S.k.results[i]);
+  else if(mode==="wrong") S.k.order = [1,4];
+  else S.k.order = [0,1,2,3,4];
+  S.k.idx=0; S.k.tries=0; S.k.phase="input"; S.k.results=[]; S.k.screen="quiz";
+  render();
+}
+
+const NOTES = {
+  "parent:home":["홈","아빠 앱 · 홈","큰 버튼 하나로 시작합니다. 아래는 최근 만든 문제 5개.",
+    ["<b>파란 테두리 + NEW 배지</b>가 방금 만든 문제입니다.",
+     "이력에서 바로 <b>카톡 재전송</b>이 됩니다. 초연이가 코드를 지워도 다시 보낼 수 있어요.",
+     "6번째를 만들면 맨 아래가 자동으로 사라집니다."]],
+  "parent:shot":["1단계","아빠 앱 · 사진 넣기","앱이 사진을 직접 받습니다. 갤러리에서 고르거나 바로 촬영.",
+    ["사진을 앱이 가지고 있어야 <b>다음 화면에서 원본과 대조</b>할 수 있습니다.",
+     "이번 요청은 <b>읽고 푸는 것까지만</b>입니다. 생성은 시키지 않습니다.",
+     "[사진 넣기]를 눌러야 아래 요청 복사 버튼이 나옵니다.",
+     "Claude / ChatGPT 전환은 여기서 합니다."]],
+  "parent:confirm":["2단계","아빠 앱 · 인식 확인 ★게이트","여기를 통과해야 생성으로 넘어갑니다.",
+    ["<b>원본 사진과 읽어낸 문장이 나란히</b> 놓입니다.",
+     "잘못 읽은 글자는 <b>그 자리에서 직접 고칩니다.</b> 고친 문장이 다음 요청에 들어갑니다.",
+     "AI가 낸 답도 함께 보여주고, 앱이 식을 계산해 검산합니다.",
+     "[맞습니다]를 눌러야만 3단계로 넘어갑니다. 아니면 [사진부터 다시] 또는 [다시 읽어달라기]."]],
+  "parent:make":["3단계","아빠 앱 · 생성 요청","확인된 문제로 같은 유형 문제를 만들라고 시킵니다.",
+    ["맨 위 초록 카드가 <b>2단계에서 확정한 문제</b>입니다.",
+     "<b>사진을 다시 올릴 필요가 없습니다.</b> 확정된 문장이 요청문 안에 들어갑니다.",
+     "Claude 앱에서 <b>아까 그 대화에 이어서</b> 붙여넣으면 됩니다.",
+     "문제 수와 풀이 포함 여부를 여기서 고릅니다."]],
+  "parent:pick":["4단계","아빠 앱 · 조회하고 고르기 ★핵심","만들어진 문제를 하나씩 보고 보낼 것만 체크합니다.",
+    ["카드를 누르면 <b>체크가 켜지고 꺼집니다.</b>",
+     "각 문제마다 <b>검산 배지</b> — 앱이 AI가 준 식을 직접 계산해 답과 대조합니다.",
+     "<b>Q5를 일부러 틀리게</b> 넣어놨습니다. 1.4 × 5 = 7 인데 답은 7.5라고 했죠.",
+     "검산이 안 맞는 문제는 <b>체크가 미리 풀린 채로</b> 뜹니다.",
+     "[이 문제만 다시 만들기] 로 그 문제만 재요청할 수 있습니다."]],
+  "parent:send":["5단계","아빠 앱 · 내보내기","고른 문제만 코드로 만들어 보냅니다.",
+    ["코드 길이가 <b>선택한 문제 수에 따라</b> 바뀝니다.",
+     "[카톡으로 보내기]는 안드로이드 공유창을 띄웁니다.",
+     "완료를 누르면 홈 이력 맨 위에 NEW로 올라갑니다."]],
+  "kid:home":["홈","초연이 앱 · 홈","받은 문제 5개가 쌓여 있습니다.",
+    ["<b>파란 카드 = 새로 받은 문제</b>.",
+     "다 푼 문제는 <b>[틀린 것만 다시] / [전체 다시]</b> 두 버튼이 생깁니다.",
+     "다 맞은 문제도 원하면 다시 풀 수 있습니다."]],
+  "kid:load":["불러오기","초연이 앱 · 코드 붙여넣기","카톡에서 복사한 코드를 붙여넣습니다.",
+    ["[붙여넣기] 한 번이면 끝. 제대로 읽히면 초록 카드로 확인시켜 줍니다."]],
+  "kid:quiz":["문제 풀기","초연이 앱 · 풀이 화면 ★핵심","문제 5개를 순서대로 풉니다. 채점이 실제로 동작합니다.",
+    ["<b>1번</b> 정수칸 — mL로 서술 → L로 답하는 단위 케이스.",
+     "<b>2번</b> 분수칸 — 가로줄 위아래. 정답 5/12 인데 <b>10/24 를 넣어도 정답</b>입니다.",
+     "<b>3번</b> 대분수칸 — 정수 + 분수. <b>앞칸 비우고 27/4 로 넣어도 정답</b>입니다.",
+     "<b>4번</b> 소수칸 — 점 기준 좌우.",
+     "<b>5번</b> 표가 들어간 문제.",
+     "일부러 틀려보세요 → <b>재시도 1번</b> → 또 틀리면 정답 + 풀이 공개."]],
+  "kid:result":["결과","초연이 앱 · 결과","맞은 개수와 문제별 O/X.",
+    ["[틀린 것만 다시] 를 누르면 틀린 문제만 모아 다시 시작합니다.",
+     "결과는 아빠에게 보내지 않습니다."]]
+};
+
+function render(){
+  const app = S.app;
+  const st = app==="parent" ? S.p : S.k;
+  const view = (app==="parent" ? P : K)[st.screen]();
+  const scr = $('screen');
+  scr.dataset.app = app;
+
+  const h = view.head;
+  scr.querySelectorAll('.apphead,.body,.footbar').forEach(e=>e.remove());
+  $('chrome').outerHTML = `<div id="chrome">
+    <div class="apphead">
+      ${h.back?`<button class="back" onclick="go('${app==='parent'?'p':'k'}','${h.back}')" aria-label="뒤로">‹</button>`:""}
+      <div><h2>${h.title}</h2>${h.sub?`<p class="sub">${h.sub}</p>`:""}</div>
+      ${h.badge?`<span class="badge-mode">${h.badge}</span>`:""}
+    </div>
+    <div class="body">${view.body}</div>
+    <div class="footbar">${view.foot}</div>
+  </div>`;
+
+  const key = app+":"+st.screen;
+  const n = NOTES[key];
+  $('notes').innerHTML = `
+    <p class="where">${n[1]}</p>
+    <h3>${n[0]}</h3>
+    <p>${n[2]}</p>
+    <ul>${n[3].map(x=>`<li>${x}</li>`).join("")}</ul>
+    <div class="jump">
+      ${(app==="parent"
+        ? [["home","홈"],["shot","①사진"],["confirm","②인식확인"],["make","③생성요청"],["pick","④고르기"],["send","⑤보내기"]]
+        : [["home","홈"],["load","불러오기"],["quiz","문제풀기"],["result","결과"]]
+       ).map(([s,l])=>`<button onclick="jump('${s}')">${l}</button>`).join("")}
+    </div>`;
+  document.querySelectorAll('.apptab').forEach(b=>b.setAttribute('aria-selected', b.dataset.app===app));
+}
+
+function jump(s){
+  const app=S.app;
+  if(app==="kid"){
+    if(s==="quiz"){ startQuiz('all'); return; }
+    if(s==="result"){ S.k.order=[0,1,2,3,4]; S.k.results=[true,true,false,true,true]; S.k.screen="result"; render(); return; }
+    if(s==="load"){ S.k.loaded=false; }
+    S.k.screen=s; render(); return;
+  }
+  // 아빠 앱 — 앞 단계 상태를 만들어 놓고 점프
+  S.p.photo = (s!=="home" && s!=="shot") || S.p.photo;
+  S.p.read  = (s==="make"||s==="pick"||s==="send");
+  if(s==="pick"||s==="send"){
+    S.p.gen=true;
+    if(!S.p.picked.length) S.p.picked = GENERATED.map((g,i)=>g.ok?i:-1).filter(i=>i>=0);
+  } else if(s!=="send"){ S.p.gen=false; S.p.picked=[]; }
+  if(s==="shot"||s==="home"){ S.p.read=false; S.p.gen=false; S.p.picked=[]; }
+  S.p.screen=s; render();
+}
+
+document.querySelectorAll('.apptab').forEach(b=>{
+  b.onclick=()=>{ S.app=b.dataset.app; render(); };
+});
+render();
+</script>
