@@ -452,7 +452,8 @@
       const prompt = `다음 사진을 분석하여 초등학교 5학년 수학 문제를 생성해주세요.
 
 [사진 분석 후]
-JSON 형식으로 3-5개의 새로운 비슷한 수준의 문제를 생성하세요.
+JSON 형식으로 정확히 5개의 새로운 비슷한 수준의 문제를 생성하세요.
+같은 풀이 구조이지만 물건의 양, 강수량, 생산량, 판매량, 독서량 등 다양한 소재로 변형된 문제들이어야 합니다.
 
 응답 형식 (JSON만 제공):
 [
@@ -482,7 +483,7 @@ JSON 형식으로 3-5개의 새로운 비슷한 수준의 문제를 생성하세
 
     // Step 3: Process AI Response
     document.getElementById('btn-back-3').addEventListener('click', () => {
-      showStep(2);
+      showStep(1);
     });
 
     document.getElementById('btn-next-3').addEventListener('click', () => {
@@ -504,25 +505,24 @@ JSON 형식으로 3-5개의 새로운 비슷한 수준의 문제를 생성하세
     function displayProblemsForSelection() {
       const container = document.getElementById('problem-select-list');
       container.innerHTML = '';
-      selectedProblems = [];
+
+      const updateSelectedProblems = () => {
+        selectedProblems = [];
+        for (let i = 0; i < generatedProblems.length; i++) {
+          const checkbox = document.getElementById(`problem-${i}`);
+          if (checkbox && checkbox.checked) {
+            selectedProblems.push(i);
+          }
+        }
+        document.getElementById('btn-next-4').disabled = selectedProblems.length === 0;
+      };
 
       generatedProblems.forEach((problem, index) => {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.id = `problem-${index}`;
         checkbox.checked = true;
-
-        const updateButton = () => {
-          selectedProblems = [];
-          generatedProblems.forEach((_, i) => {
-            if (document.getElementById(`problem-${i}`)?.checked) {
-              selectedProblems.push(i);
-            }
-          });
-          document.getElementById('btn-next-4').disabled = selectedProblems.length === 0;
-        };
-
-        checkbox.addEventListener('change', updateButton);
+        checkbox.addEventListener('change', updateSelectedProblems);
 
         const label = document.createElement('label');
         label.htmlFor = `problem-${index}`;
@@ -542,11 +542,7 @@ JSON 형식으로 3-5개의 새로운 비슷한 수준의 문제를 생성하세
         container.appendChild(item);
       });
 
-      selectedProblems = [];
-      generatedProblems.forEach((_, index) => {
-        selectedProblems.push(index);
-      });
-      document.getElementById('btn-next-4').disabled = false;
+      updateSelectedProblems();
     }
 
     // Step 4: Select Problems
