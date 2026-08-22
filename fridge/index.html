@@ -304,11 +304,11 @@ const LS = { stock:'fridge.stock', favs:'fridge.favs' };
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} };
 
-const CUISINES   = ['자유','한식','중식','일식','기타'];
+const CUISINES   = ['자유','한식','중식','일식','양식','기타'];
 const SITUATIONS = ['자유','가정식','술안주','아이들요리','간식','기타'];
 
 // 칩의 '기타' 는 저장된 태그가 아니라 "나머지 전부" 를 뜻한다.
-const NAMED_CUISINE   = ['한식','중식','일식'];
+const NAMED_CUISINE   = ['한식','중식','일식','양식'];
 const NAMED_SITUATION = ['가정식','술안주','아이들요리','간식'];
 
 let RECIPES = [];
