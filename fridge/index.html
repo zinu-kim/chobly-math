@@ -133,12 +133,19 @@
       color:var(--green);background:var(--green-tint);
       padding:3px 8px;border-radius:20px;letter-spacing:.02em;
     }
+    .btnrow{display:flex;gap:8px;margin:16px 16px 24px}
     .again{
-      display:block;width:calc(100% - 32px);margin:16px 16px 24px;padding:12px 0;
+      flex:1;padding:12px 0;
       border:1px solid var(--line);border-radius:11px;background:var(--surface);
       font-family:inherit;font-size:12.5px;font-weight:500;color:var(--green);cursor:pointer;
     }
     .again:active{background:var(--green-tint)}
+    .surprise{
+      flex:1;padding:12px 0;
+      border:1px solid var(--line);border-radius:11px;background:var(--surface);
+      font-family:inherit;font-size:12.5px;font-weight:500;color:var(--ink-soft);cursor:pointer;
+    }
+    .surprise:active{background:var(--paper)}
     .rcount{text-align:center;font-size:10px;font-weight:300;color:var(--ink-faint);padding:0 16px 22px}
 
     /* ── 냉장고 ── */
@@ -259,7 +266,10 @@
       <div class="label"><span id="askLabel">오늘의 추천</span><span class="clear" id="askClear" hidden>초기화</span></div>
       <div class="notice" id="notice" hidden></div>
       <div class="cards" id="cards"></div>
-      <button class="again" id="again">⟳ 다시 추천</button>
+      <div class="btnrow">
+        <button class="again" id="again">⟳ 다시 추천</button>
+        <button class="surprise" id="surprise">⇄ 의외의 요리</button>
+      </div>
       <div class="rcount" id="rcount"></div>
     </div>
   </section>
@@ -406,7 +416,7 @@ function parseQuery(q){
   return want;
 }
 
-function score(r, want){
+function score(r, want, stockSign = 1){
   let s = 0;
   want.main.forEach(m => {
     if (r.main.includes(m)) s += 10;
@@ -417,7 +427,7 @@ function score(r, want){
   if (want.type && r.type === want.type) s += 5;
   if (want.cuisine && r.cuisine === want.cuisine) s += 5;
   if (want.maxTime && r.time <= want.maxTime) s += 4;
-  s += stockHits(r) * 1.2;          // 재고는 제약이 아니라 가산점
+  s += stockHits(r) * 1.2 * stockSign;   // 재고는 제약이 아니라 가산점(역추천일 땐 감점)
   return s;
 }
 
@@ -442,7 +452,7 @@ const fitScore = (r, want) => score(r, want) - stockHits(r) * 1.2;
 
 // 추천은 절대 비지 않는다.
 // 조건을 한 단계씩 풀어가며 5개를 채우고, 1단계로 못 채웠으면 안내를 남긴다.
-function pick(n = 5){
+function pick(n = 5, invert = false){
   const want = parseQuery(state.query);
   const asked = !!state.query;
   const got   = understood(want);
@@ -458,8 +468,10 @@ function pick(n = 5){
     () => true                                                  // 전부
   ];
 
+  // 의외의 요리(invert): 조건은 그대로 두되, 재고 매칭이 많을수록 오히려 감점해
+  // 평소 재고 가산점에 밀려 안 보이던 요리를 끌어올린다.
   const rank = list => list
-    .map(r => ({ r, s: score(r, want) + Math.random() * (asked && got ? 0.8 : 2.6) }))
+    .map(r => ({ r, s: score(r, want, invert ? -1 : 1) + Math.random() * (asked && got ? 0.8 : 2.6) }))
     .sort((a,b) => b.s - a.s)
     .map(x => x.r);
 
@@ -686,6 +698,7 @@ $('home').addEventListener('click', e => {
 
 // 재고 변경은 여기서야 반영된다
 $('again').onclick = () => { state.shown = pick(); renderCards() };
+$('surprise').onclick = () => { state.shown = pick(5, true); renderCards() };
 
 $('stockAdd').onclick = addStock;
 $('stockInput').addEventListener('keydown', e => { if (e.key === 'Enter') addStock() });
