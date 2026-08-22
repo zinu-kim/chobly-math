@@ -138,7 +138,52 @@ TBSP = {'참기름':13,'식용유':13,'올리브유':13,'설탕':12,'고춧가�
         '마요네즈':14,'물엿':21,'꿀':21,'메이플시럽':20}
 CUP  = {'우유':205,'생크림':205,'식용유':180,'올리브유':180}
 
-import re, json, sys
+import re, json, sys, csv, collections, os
+
+# ── 식약처 식품영양성분 DB(음식) 매칭 ────────────────────────────
+# 이름이 정확히 일치하면 실제 분석/산출값을 쓴다. 재료 합산 추정보다
+# 우선한다 — 조리 손실(수분 증발 등)까지 반영된 실측치이기 때문이다.
+
+_DB_PATH = os.path.join(os.path.dirname(__file__), 'dish_nutrition_db.csv')
+
+_SRC_PRIORITY = {
+  '가정식(분석 함량)': 0,
+  '외식(분석함량)': 1,
+  '외식(재료량 기반 산출함량)': 2,
+  '산업체급식(재료량 기반 산출 함량)': 3,
+  '중고등학교급식(재료량 기반 산출함량)': 4,
+  '초등학교급식(재료량 기반 산출 함량)': 4,
+  '외식(프랜차이즈 등 업체 제공 영양정보)': 5,
+}
+
+def _norm(s):
+    return re.sub(r'[\s_]', '', s or '')
+
+def _load_dish_db():
+    if not os.path.exists(_DB_PATH):
+        return {}
+    by_name = collections.defaultdict(list)
+    with open(_DB_PATH, encoding='utf-8') as f:
+        for row in csv.DictReader(f):
+            by_name[_norm(row['식품명'])].append(row)
+    best = {}
+    for name, cands in by_name.items():
+        cands.sort(key=lambda r: _SRC_PRIORITY.get(r['식품기원명'], 9))
+        best[name] = cands[0]
+    return best
+
+DISH_DB = _load_dish_db()
+
+def dish_db_lookup(name):
+    """요리명이 DB와 정확히 일치하면 100g당 (kcal,탄수,단백,지방)을 돌려준다."""
+    row = DISH_DB.get(_norm(name))
+    if not row:
+        return None
+    try:
+        return (float(row['에너지(kcal)']), float(row['탄수화물(g)']),
+                float(row['단백질(g)']), float(row['지방(g)']))
+    except (ValueError, TypeError):
+        return None
 
 def grams(name, amount):
     """'150g', '1큰술', '1/2대' 같은 표기를 그램으로 바꾼다."""
@@ -166,11 +211,8 @@ OILS = ('식용유', '올리브유', '참기름')
 FRY_THRESHOLD = 100      # 이보다 많은 기름은 튀김용 — 붓고 버린다
 ABSORB_RATE   = 0.10     # 튀김은 재료 무게의 약 10% 를 흡수한다
 
-def compute(r):
-    """재료를 그램으로 환산해 합산한 뒤 인분으로 나눈다.
-
-    튀김 기름은 통째로 먹는 게 아니라 흡수되는 만큼만 먹으므로
-    양이 많으면 흡수량으로 바꿔 계산한다."""
+def _ingredient_weights(r):
+    """재료를 그램으로 환산한다. 튀김 기름은 흡수량으로 바꾼다."""
     weights, unknown = [], []
     for i in r['ingredients']:
         n = i['name']
@@ -182,14 +224,30 @@ def compute(r):
     for w in weights:
         if w[0] in OILS and w[1] >= FRY_THRESHOLD:
             w[1] = min(w[1], food * ABSORB_RATE)
+    return weights, unknown
+
+def compute(r):
+    """레시피 1인분 영양정보를 계산한다.
+
+    요리명이 식약처 DB와 정확히 일치하면 실측/산출값을 쓰고,
+    1인분 무게는 이 레시피의 재료 총량(조리 후 기준, servings로 나눈 값)으로 잡는다.
+    일치하지 않으면 재료를 하나씩 더하는 방식으로 대신한다."""
+    weights, unknown = _ingredient_weights(r)
+    total_g = sum(g for _, g in weights)
+    s = r['servings']
+
+    hit = dish_db_lookup(r['name'])
+    if hit and total_g > 0:
+        k100, c100, p100, f100 = hit
+        per_serving_g = total_g / s
+        ratio = per_serving_g / 100
+        return (round(k100*ratio), round(c100*ratio), round(p100*ratio), round(f100*ratio)), unknown, 'db'
 
     kcal = carb = prot = fat = 0.0
     for n, g in weights:
         k, c, p, f = NUTRI[n]
         kcal += k*g/100; carb += c*g/100; prot += p*g/100; fat += f*g/100
-
-    s = r['servings']
-    return (round(kcal/s), round(carb/s), round(prot/s), round(fat/s)), unknown
+    return (round(kcal/s), round(carb/s), round(prot/s), round(fat/s)), unknown, 'ingredient' 
 
 if __name__ == '__main__':
     data = json.load(open(sys.argv[1] if len(sys.argv)>1 else '../recipes.json'))
@@ -197,13 +255,16 @@ if __name__ == '__main__':
     print(f"{'요리명':<20}{'적어둔 값':>22}{'계산 값':>22}{'차이':>10}")
     print('─'*76)
     diffs = []
+    db_count = 0
     for r in data:
-        (k,c,p,f), unk = compute(r)
+        (k,c,p,f), unk, src = compute(r)
+        if src == 'db': db_count += 1
         miss |= set(unk)
         old = f"{r['calories']}kcal {r['nutrition']['carb']}/{r['nutrition']['protein']}/{r['nutrition']['fat']}"
-        new = f"{k}kcal {c}/{p}/{f}"
+        mark = 'DB' if src == 'db' else '  '
+        new = f"{k}kcal {c}/{p}/{f} {mark}"
         d = k - r['calories']
         diffs.append(abs(d)/max(r['calories'],1))
-        print(f"{r['name']:<20}{old:>22}{new:>22}{d:>+9}")
+        print(f"{r['name']:<20}{old:>22}{new:>25}{d:>+9}")
     print('─'*76)
-    print(f"평균 오차율 {sum(diffs)/len(diffs)*100:.0f}%   |   표에 없는 재료: {sorted(miss) or '없음'}")
+    print(f"평균 오차율 {sum(diffs)/len(diffs)*100:.0f}%   |   DB 실측값 사용: {db_count}/{len(data)}   |   표에 없는 재료: {sorted(miss) or '없음'}")
