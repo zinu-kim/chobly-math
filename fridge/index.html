@@ -384,14 +384,18 @@ function parseQuery(q){
     if (k.length >= 2 && q.includes(k)) vs.forEach(v => { if (MAIN_INDEX.includes(v) && !want.main.includes(v)) want.main.push(v) });
   });
 
+  // 1글자 키워드는 다른 낱말 속에 우연히 끼어 오탐을 내므로 뺀다
+  // ('국'이 '중국요리'에, '파'가 '파스타'에 걸리는 것을 막기 위함)
+  const hit = w => w.length >= 2 && q.includes(w);
+
   for (const [tag, words] of Object.entries(VOCAB.flavor))
-    if (words.some(w => q.includes(w))) want.flavor.push(tag);
+    if (words.some(hit)) want.flavor.push(tag);
   for (const [tag, words] of Object.entries(VOCAB.situation))
-    if (words.some(w => q.includes(w))) want.situation.push(tag);
+    if (words.some(hit)) want.situation.push(tag);
   for (const [tag, words] of Object.entries(VOCAB.type))
-    if (!want.type && words.some(w => q.includes(w))) want.type = tag;
+    if (!want.type && words.some(hit)) want.type = tag;
   for (const [tag, words] of Object.entries(VOCAB.cuisine))
-    if (!want.cuisine && words.some(w => q.includes(w))) want.cuisine = tag;
+    if (!want.cuisine && words.some(hit)) want.cuisine = tag;
 
   const m = q.match(/(\d+)\s*분/);
   if (m) want.maxTime = +m[1];
