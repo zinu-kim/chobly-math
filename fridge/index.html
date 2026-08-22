@@ -83,7 +83,7 @@
       letter-spacing:.06em;white-space:nowrap;width:26px;
     }
     .chips{
-      display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;
+      display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;position:relative;
       scrollbar-width:none;-webkit-overflow-scrolling:touch;
     }
     .chips::-webkit-scrollbar{display:none}
@@ -104,6 +104,12 @@
     .label .clear{
       margin-left:auto;letter-spacing:0;font-size:11px;font-weight:400;
       color:var(--ink-faint);cursor:pointer;text-decoration:underline;
+    }
+
+    .notice{
+      margin:0 16px 12px;padding:10px 13px;border-radius:10px;
+      background:var(--paper);border:1px solid var(--line);
+      font-size:11.5px;font-weight:300;color:var(--ink-soft);line-height:1.6;
     }
 
     /* ── 추천 카드 ── */
@@ -245,6 +251,7 @@
     </div>
     <div class="scroll">
       <div class="label"><span id="askLabel">오늘의 추천</span><span class="clear" id="askClear" hidden>초기화</span></div>
+      <div class="notice" id="notice" hidden></div>
       <div class="cards" id="cards"></div>
       <button class="again" id="again">⟳ 다시 추천</button>
     </div>
@@ -292,8 +299,12 @@ const LS = { stock:'fridge.stock', favs:'fridge.favs' };
 const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } };
 const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} };
 
-const CUISINES  = ['자유','한식','양식','중식','일식','베트남식','태국식'];
-const SITUATIONS = ['자유','간식','술안주','건강식','아이들요리','간편식'];
+const CUISINES   = ['자유','한식','중식','일식','기타'];
+const SITUATIONS = ['자유','가정식','술안주','아이들요리','간식','기타'];
+
+// 칩의 '기타' 는 저장된 태그가 아니라 "나머지 전부" 를 뜻한다.
+const NAMED_CUISINE   = ['한식','중식','일식'];
+const NAMED_SITUATION = ['가정식','술안주','아이들요리','간식'];
 
 let RECIPES = [];
 const state = {
@@ -303,6 +314,7 @@ const state = {
   favs:  load(LS.favs, []),
   shown: [],        // 홈에 걸린 추천 5개
   query: '',        // 현재 자연어 조건
+  notice: null,     // 조건을 못 채웠을 때 띄우는 안내
   current: null,    // 레시피 탭에 열린 요리
   pending: null     // 폐기 확인 대기 항목
 };
@@ -334,7 +346,7 @@ const stockHits = r => r.ingredients.filter(i => inStock(i.name)).length;
 const VOCAB = {
   flavor: {
     '매콤':['매콤','매운','맵','칼칼','알싸'], '얼큰':['얼큰','시원한 국물','해장'],
-    '담백':['담백','슴슴','순한'], '고소':['고소','크리미'],
+    '담백':['담백','슴슴','순한','건강','가벼운','다이어트'], '고소':['고소','크리미'],
     '새콤':['새콤','상큼','새콤달콤'], '달콤':['달콤','달달','단맛'], '짭짤':['짭짤','짭조름']
   },
   type: {
@@ -348,10 +360,12 @@ const VOCAB = {
     '일식':['일식','일본'], '베트남식':['베트남'], '태국식':['태국','타이']
   },
   situation: {
-    '간식':['간식','후식','디저트'], '술안주':['안주','술'], '건강식':['건강','다이어트','가벼운','담백한 한 끼'],
-    '아이들요리':['아이','애들','유아','어린이'], '간편식':['간편','간단','빠른','후딱','금방','쉬운']
+    '가정식':['가정식','집밥','밥반찬','반찬','밥상'], '술안주':['안주','술'],
+    '아이들요리':['아이','애들','유아','어린이'], '간식':['간식','후식','디저트']
   }
 };
+
+const QUICK = ['간편','간단','빠른','후딱','금방','쉬운'];
 
 // 코퍼스에 등장하는 주재료 목록 (긴 이름 우선 매칭)
 let MAIN_INDEX = [];
@@ -376,7 +390,7 @@ function parseQuery(q){
 
   const m = q.match(/(\d+)\s*분/);
   if (m) want.maxTime = +m[1];
-  else if (want.situation.includes('간편식')) want.maxTime = 15;
+  else if (QUICK.some(w => q.includes(w))) want.maxTime = 15;
 
   return want;
 }
@@ -396,23 +410,64 @@ function score(r, want){
   return s;
 }
 
-const matchChips = r =>
-  (state.cuisine   === '자유' || r.cuisine === state.cuisine) &&
-  (state.situation === '자유' || r.situation.includes(state.situation));
+function matchCuisine(r){
+  if (state.cuisine === '자유') return true;
+  if (state.cuisine === '기타') return !NAMED_CUISINE.includes(r.cuisine);
+  return r.cuisine === state.cuisine;
+}
+function matchSituation(r){
+  if (state.situation === '자유') return true;
+  if (state.situation === '기타') return !r.situation.some(x => NAMED_SITUATION.includes(x));
+  return r.situation.includes(state.situation);
+}
+const matchChips = r => matchCuisine(r) && matchSituation(r);
 
-// 칩은 먼저 걸러내고, 그 안에서 점수로 줄 세운다.
-// 칩에 걸린 게 5개가 안 되면 나머지에서 점수순으로 이어 채운다.
+// 자연어에서 건진 조건이 하나라도 있는가
+const understood = w =>
+  w.main.length || w.flavor.length || w.type || w.cuisine || w.situation.length || w.maxTime;
+
+// 재고 가산점을 뺀 순수 요청 부합도 — 0이면 요청과 무관한 요리다
+const fitScore = (r, want) => score(r, want) - stockHits(r) * 1.2;
+
+// 추천은 절대 비지 않는다.
+// 조건을 한 단계씩 풀어가며 5개를 채우고, 1단계로 못 채웠으면 안내를 남긴다.
 function pick(n = 5){
   const want = parseQuery(state.query);
-  const jitter = state.query ? 0.8 : 2.6;
+  const asked = !!state.query;
+  const got   = understood(want);
+  const fits  = r => !got || fitScore(r, want) > 0;
+
+  // 위에서부터 조건이 느슨해진다
+  const tiers = [
+    r => matchChips(r) && fits(r),                              // 칩 + 자연어
+    r => matchChips(r),                                         // 칩만
+    r => (matchCuisine(r) || matchSituation(r)) && fits(r),     // 칩 한쪽 + 자연어
+    r => matchCuisine(r) || matchSituation(r),                  // 칩 한쪽
+    r => fits(r),                                               // 자연어만
+    () => true                                                  // 전부
+  ];
+
   const rank = list => list
-    .map(r => ({ r, s: score(r, want) + Math.random() * jitter }))
+    .map(r => ({ r, s: score(r, want) + Math.random() * (asked && got ? 0.8 : 2.6) }))
     .sort((a,b) => b.s - a.s)
     .map(x => x.r);
 
-  const hit = rank(RECIPES.filter(matchChips));
-  if (hit.length >= n) return hit.slice(0, n);
-  return [...hit, ...rank(RECIPES.filter(r => !matchChips(r)))].slice(0, n);
+  const out = [];
+  let firstTierFilled = false;
+  tiers.forEach((pass, i) => {
+    if (out.length >= n) return;
+    const add = rank(RECIPES.filter(r => pass(r) && !out.includes(r)));
+    if (i === 0 && add.length >= n) firstTierFilled = true;
+    out.push(...add.slice(0, n - out.length));
+  });
+
+  // 못 알아들은 요청은 1단계가 다 차더라도 알려준다 (전부 통과시킨 것뿐이므로)
+  state.notice =
+      asked && !got   ? '무슨 요리인지 몰라서 비슷한 걸로 골라봤어요'
+    : firstTierFilled ? null
+    :                   '딱 맞는 요리가 없어 비슷한 걸로 채웠어요';
+
+  return out.slice(0, n);
 }
 
 /* ─────────────────────────────────────────
@@ -435,9 +490,17 @@ function toast(msg){
 }
 
 function renderChips(){
-  const build = (el, list, key) => el.innerHTML = list.map(v =>
-    `<span class="chip${state[key] === v ? ' on' : ''}" data-key="${key}" data-v="${v}">${v}</span>`
-  ).join('');
+  const build = (el, list, key) => {
+    el.innerHTML = list.map(v =>
+      `<span class="chip${state[key] === v ? ' on' : ''}" data-key="${key}" data-v="${v}">${v}</span>`
+    ).join('');
+    // 고른 칩이 줄 밖으로 밀려 잘리지 않게 가로 스크롤을 맞춘다
+    const on = el.querySelector('.chip.on');
+    if (!on) return;
+    const left = on.offsetLeft, right = left + on.offsetWidth;
+    if (left < el.scrollLeft) el.scrollLeft = Math.max(0, left - 8);
+    else if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth + 8;
+  };
   build($('chipsCuisine'), CUISINES, 'cuisine');
   build($('chipsSituation'), SITUATIONS, 'situation');
 }
@@ -452,6 +515,8 @@ function renderCards(){
   if (state.query) parts.push(`"${state.query}"`);
   $('askLabel').textContent = parts.length ? parts.join(' ') + ' 추천' : '오늘의 추천';
   $('askClear').hidden = !parts.length;
+  $('notice').hidden = !state.notice;
+  if (state.notice) $('notice').textContent = state.notice;
   $('cards').innerHTML = state.shown.map(r => `
     <div class="card" data-id="${r.id}">
       <h3>${r.name}</h3>
