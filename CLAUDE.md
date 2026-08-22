@@ -41,8 +41,10 @@ API 키를 코드에 넣는 제안도 하지 않는다.
 
 - 단일 HTML + 인라인 CSS/JS (`fridge/index.html`)
 - 레시피 데이터만 별도 파일 (`fridge/recipes.json`, 약 1.2 MB)
-- PWA — `fridge/manifest.json`, `fridge/sw.js`
-- GitHub Pages 배포
+- PWA — `fridge/manifest.json`, `fridge/sw.js`, 아이콘 4종 (`fridge/icon-*.png`, `apple-touch-icon.png`)
+  아이콘은 초록 바탕에 흰 냉장고. 수학 앱 아이콘(`/icon-*.png`)을 빌려 쓰지 않는다
+- GitHub Pages 배포 — 아내 폰 크롬에서 "홈 화면에 추가"로 설치
+- 파일을 추가하면 `sw.js` 의 `ASSETS` 와 `VERSION` 을 함께 올린다
 - 외부 로드는 Google Fonts 뿐 (Gowun Batang + IBM Plex Sans KR)
 
 ## 레시피 데이터 규칙
