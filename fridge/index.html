@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4CAF50">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="냉장고">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="../icon-192.png">
+  <title>하야의 냉장고</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+      background: white;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    /* 탭 바 */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1px solid #e0e0e0;
+      background: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: #999;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab-button.active {
+      color: #333;
+      border-bottom-color: #4CAF50;
+    }
+
+    /* 탭 콘텐츠 */
+    .tab-content {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .tab-content.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* === 홈 탭 === */
+    #home {
+      padding: 0;
+      flex-direction: column;
+    }
+
+    .home-input-area {
+      padding: 16px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .home-input-area input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .recipe-cards {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .recipe-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .recipe-card:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .recipe-card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .recipe-card-info {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    /* === 재고 탭 === */
+    #inventory {
+      padding: 0;
+      flex-direction: column;
+    }
+
+    .inventory-input-area {
+      padding: 16px;
+      background: white;
+      border-bottom: 1px solid #e0e0e0;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      gap: 8px;
+    }
+
+    .inventory-input-area input {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .inventory-input-area button {
+      padding: 10px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .inventory-list {
+      padding: 16px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .inventory-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 14px;
+    }
+
+    .inventory-item button {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    /* === 레시피 탭 === */
+    #recipe {
+      padding-bottom: 80px;
+    }
+
+    .recipe-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .recipe-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .recipe-heart {
+      font-size: 24px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+
+    .recipe-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 13px;
+    }
+
+    .recipe-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .recipe-info-label {
+      color: #999;
+    }
+
+    .recipe-info-value {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .recipe-section {
+      margin-bottom: 20px;
+    }
+
+    .recipe-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .ingredient-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .ingredient-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      padding: 4px 0;
+    }
+
+    .ingredient-check {
+      width: 18px;
+      height: 18px;
+      border: 2px solid #ddd;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .ingredient-check.checked {
+      background: #4CAF50;
+      border-color: #4CAF50;
+      color: white;
+    }
+
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .step-number {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      background: #4CAF50;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .video-link {
+      color: #4CAF50;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    /* === 즐겨찾기 탭 === */
+    #favorites {
+      padding: 16px;
+      flex-direction: column;
+    }
+
+    .favorites-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .favorite-item {
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .favorite-item:hover {
+      background: #f9f9f9;
+    }
+
+    .favorites-empty {
+      text-align: center;
+      color: #999;
+      padding: 40px 16px;
+      font-size: 14px;
+    }
+
+    /* 반응형 */
+    @media (max-height: 600px) {
+      .app-container {
+        min-height: 100vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 탭 바 -->
+    <div class="tab-bar">
+      <button class="tab-button active" data-tab="home">홈</button>
+      <button class="tab-button" data-tab="inventory">재고</button>
+      <button class="tab-button" data-tab="recipe">레시피</button>
+      <button class="tab-button" data-tab="favorites">즐겨찾기</button>
+    </div>
+
+    <!-- 홈 탭 -->
+    <div id="home" class="tab-content active">
+      <div class="home-input-area">
+        <input type="text" id="homeInput" placeholder="예) 매콤한 거, 간단한 국물...">
+      </div>
+      <div class="recipe-cards">
+        <div class="recipe-card" onclick="openRecipe('간장계란밥')">
+          <div class="recipe-card-title">간장계란밥</div>
+          <div class="recipe-card-info">
+            <span>⏱️ 10분</span>
+            <span>🔥 180kcal</span>
+          </div>
+        </div>
+        <div class="recipe-card" onclick="openRecipe('계란말이')">
+          <div class="recipe-card-title">계란말이</div>
+          <div class="recipe-card-info">
+            <span>⏱️ 15분</span>
+            <span>🔥 120kcal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 재고 탭 -->
+    <div id="inventory" class="tab-content">
+      <div class="inventory-input-area">
+        <input type="text" id="inventoryInput" placeholder="재료 입력">
+        <button onclick="addInventory()">+</button>
+      </div>
+      <div class="inventory-list" id="inventoryList">
+        <!-- 동적으로 생성됨 -->
+      </div>
+    </div>
+
+    <!-- 레시피 탭 -->
+    <div id="recipe" class="tab-content">
+      <div class="recipe-header">
+        <div class="recipe-title" id="recipeName">레시피</div>
+        <button class="recipe-heart" id="favoriteBtn" onclick="toggleFavorite()">♡</button>
+      </div>
+
+      <div class="recipe-info-grid">
+        <div class="recipe-info-item">
+          <span class="recipe-info-label">조리시간</span>
+          <span class="recipe-info-value" id="recipeTime">15분</span>
+        </div>
+        <div class="recipe-info-item">
+          <span class="recipe-info-label">인분</span>
+          <span class="recipe-info-value" id="recipeServings">2인분</span>
+        </div>
+        <div class="recipe-info-item">
+          <span class="recipe-info-label">칼로리</span>
+          <span class="recipe-info-value" id="recipeCalories">250kcal</span>
+        </div>
+        <div class="recipe-info-item">
+          <span class="recipe-info-label">난이도</span>
+          <span class="recipe-info-value" id="recipeDifficulty">쉬움</span>
+        </div>
+      </div>
+
+      <div class="recipe-section">
+        <div class="recipe-section-title">재료</div>
+        <div class="ingredient-list" id="ingredientList">
+          <!-- 동적으로 생성됨 -->
+        </div>
+      </div>
+
+      <div class="recipe-section">
+        <div class="recipe-section-title">조리순서</div>
+        <div class="step-list" id="stepList">
+          <!-- 동적으로 생성됨 -->
+        </div>
+      </div>
+
+      <div class="recipe-section">
+        <div class="recipe-section-title">영양정보</div>
+        <div id="nutritionInfo" style="font-size: 13px; line-height: 1.8;">
+          <!-- 동적으로 생성됨 -->
+        </div>
+      </div>
+
+      <div class="recipe-section" id="videoSection" style="display: none;">
+        <div class="recipe-section-title">참고 영상</div>
+        <a href="#" class="video-link" id="videoLink" target="_blank">유사 레시피 보기</a>
+      </div>
+    </div>
+
+    <!-- 즐겨찾기 탭 -->
+    <div id="favorites" class="tab-content">
+      <div class="favorites-list" id="favoritesList">
+        <div class="favorites-empty">저장된 레시피가 없습니다</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 상태 관리
+    const state = {
+      inventory: [],
+      favorites: [],
+      currentRecipe: null
+    };
+
+    // 탭 전환
+    document.querySelectorAll('.tab-button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabName = btn.dataset.tab;
+        switchTab(tabName);
+      });
+    });
+
+    function switchTab(tabName) {
+      // 탭 콘텐츠 전환
+      document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.remove('active');
+      });
+      document.getElementById(tabName).classList.add('active');
+
+      // 탭 버튼 활성화
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+      // 재고 진입 시 목록 갱신
+      if (tabName === 'inventory') {
+        renderInventory();
+      }
+    }
+
+    // 재고 추가
+    function addInventory() {
+      const input = document.getElementById('inventoryInput');
+      const value = input.value.trim();
+
+      if (!value) return;
+      if (state.inventory.includes(value)) {
+        alert('이미 등록된 재료입니다');
+        return;
+      }
+
+      state.inventory.push(value);
+      state.inventory.sort();
+      input.value = '';
+      renderInventory();
+    }
+
+    // 재고 렌더링
+    function renderInventory() {
+      const list = document.getElementById('inventoryList');
+      list.innerHTML = state.inventory.map(item => `
+        <div class="inventory-item">
+          <span>${item}</span>
+          <button onclick="removeInventory('${item}')">×</button>
+        </div>
+      `).join('');
+    }
+
+    // 재고 삭제
+    function removeInventory(item) {
+      if (confirm(`'${item}'을(를) 폐기하시겠습니까?`)) {
+        state.inventory = state.inventory.filter(i => i !== item);
+        renderInventory();
+      }
+    }
+
+    // 레시피 열기
+    function openRecipe(recipeName) {
+      state.currentRecipe = recipeName;
+
+      // 예시 데이터
+      const recipes = {
+        '간장계란밥': {
+          time: '10분',
+          servings: '2인분',
+          calories: '180kcal',
+          difficulty: '쉬움',
+          ingredients: [
+            { name: '계란', amount: '2개' },
+            { name: '간장', amount: '1큰술' },
+            { name: '밥', amount: '200g' }
+          ],
+          steps: [
+            '밥을 준비한다',
+            '계란을 풀어 팬에 살짝 익힌다',
+            '밥과 계란을 섞고 간장을 뿌린다'
+          ],
+          nutrition: '단백질 12g | 탄수화물 45g | 지방 8g',
+          video: '#'
+        },
+        '계란말이': {
+          time: '15분',
+          servings: '2인분',
+          calories: '120kcal',
+          difficulty: '보통',
+          ingredients: [
+            { name: '계란', amount: '3개' },
+            { name: '간장', amount: '0.5큰술' },
+            { name: '설탕', amount: '0.5작은술' }
+          ],
+          steps: [
+            '계란을 풀어 양념한다',
+            '팬에 기름을 두르고 계란을 흐르게 붓는다',
+            '계란이 반쯤 익으면 돌돌 말아 다시 익힌다'
+          ],
+          nutrition: '단백질 18g | 탄수화물 5g | 지방 10g',
+          video: '#'
+        }
+      };
+
+      const recipe = recipes[recipeName];
+      if (!recipe) return;
+
+      // 정보 업데이트
+      document.getElementById('recipeName').textContent = recipeName;
+      document.getElementById('recipeTime').textContent = recipe.time;
+      document.getElementById('recipeServings').textContent = recipe.servings;
+      document.getElementById('recipeCalories').textContent = recipe.calories;
+      document.getElementById('recipeDifficulty').textContent = recipe.difficulty;
+
+      // 재료
+      const ingredientList = document.getElementById('ingredientList');
+      ingredientList.innerHTML = recipe.ingredients.map(ing => {
+        const hasItem = state.inventory.includes(ing.name);
+        return `
+          <div class="ingredient-item">
+            <div class="ingredient-check ${hasItem ? 'checked' : ''}">
+              ${hasItem ? '●' : '○'}
+            </div>
+            <span>${ing.name} ${ing.amount}</span>
+          </div>
+        `;
+      }).join('');
+
+      // 조리순서
+      const stepList = document.getElementById('stepList');
+      stepList.innerHTML = recipe.steps.map((step, idx) => `
+        <div class="step-item">
+          <div class="step-number">${idx + 1}</div>
+          <div>${step}</div>
+        </div>
+      `).join('');
+
+      // 영양정보
+      document.getElementById('nutritionInfo').textContent = recipe.nutrition;
+
+      // 레시피 탭으로 전환
+      switchTab('recipe');
+
+      // 즐겨찾기 하트 상태 업데이트
+      const isFavorited = state.favorites.some(f => f.name === recipeName);
+      document.getElementById('favoriteBtn').textContent = isFavorited ? '❤️' : '♡';
+    }
+
+    // 즐겨찾기 토글
+    function toggleFavorite() {
+      if (!state.currentRecipe) return;
+
+      const idx = state.favorites.findIndex(f => f.name === state.currentRecipe);
+      if (idx >= 0) {
+        state.favorites.splice(idx, 1);
+      } else {
+        state.favorites.push({
+          name: state.currentRecipe,
+          savedAt: new Date()
+        });
+      }
+
+      const isFavorited = state.favorites.some(f => f.name === state.currentRecipe);
+      document.getElementById('favoriteBtn').textContent = isFavorited ? '❤️' : '♡';
+      renderFavorites();
+    }
+
+    // 즐겨찾기 렌더링
+    function renderFavorites() {
+      const list = document.getElementById('favoritesList');
+      if (state.favorites.length === 0) {
+        list.innerHTML = '<div class="favorites-empty">저장된 레시피가 없습니다</div>';
+      } else {
+        list.innerHTML = state.favorites.reverse().map(fav => `
+          <div class="favorite-item" onclick="openRecipe('${fav.name}')">
+            ${fav.name}
+          </div>
+        `).join('');
+      }
+    }
+
+    // Enter 키로 재고 추가
+    document.getElementById('inventoryInput')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addInventory();
+    });
+
+    // Service Worker 등록
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(err => {
+        console.log('Service Worker 등록 실패:', err);
+      });
+    }
+  </script>
+</body>
+</html>
