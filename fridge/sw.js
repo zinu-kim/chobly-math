@@ -1,8 +1,9 @@
-const CACHE_NAME = 'haya-fridge-v1';
+const CACHE_NAME = 'haya-fridge-v2';
 const URLS_TO_CACHE = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './recipes.json'
 ];
 
 self.addEventListener('install', event => {

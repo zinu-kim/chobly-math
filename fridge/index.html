@@ -2,10 +2,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#2F5D3F">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FFFFFF">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="냉장고">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="../icon-192.png">
@@ -14,927 +13,588 @@
   <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
   <title>하야의 냉장고</title>
   <style>
-    :root {
-      --paper: #E9EDE4;
-      --surface: #FCFDFB;
-      --ink: #18241C;
-      --ink-soft: #5C6B60;
-      --line: #D3DACB;
-      --green: #2F5D3F;
-      --omija: #A8324A;
-      --amber: #C98A2E;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'IBM Plex Sans KR', sans-serif;
-      font-weight: 400;
-      background: var(--surface);
-      color: var(--ink);
-      -webkit-font-smoothing: antialiased;
-    }
-
-    .app-container {
-      max-width: 480px;
-      margin: 0 auto;
-      background: var(--surface);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-    }
-
-    /* 탭 바 */
-    .tab-bar {
-      display: flex;
-      border-bottom: 1px solid var(--line);
-      background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      flex: none;
-    }
-
-    .tab-button {
-      flex: 1;
-      padding: 15px 0 12px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      font-size: 12.5px;
-      color: var(--ink-soft);
-      border-bottom: 2px solid transparent;
-      transition: all 0.3s;
-      font-weight: 400;
-    }
-
-    .tab-button.active {
-      color: var(--ink);
-      border-bottom-color: var(--omija);
-      font-weight: 600;
-    }
-
-    /* 탭 콘텐츠 */
-    .tab-content {
-      display: none;
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-
-    .tab-content.active {
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* === 홈 탭 === */
-    #home {
-      padding: 0;
-      flex-direction: column;
-    }
-
-    .home-input-area {
-      padding: 16px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--line);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      flex: none;
-    }
-
-    .home-input-area input {
-      width: 100%;
-      padding: 13px 14px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      font-size: 13px;
-      font-family: 'IBM Plex Sans KR', sans-serif;
-      color: var(--ink-soft);
-      background: var(--surface);
-    }
-
-    .home-input-area input::placeholder {
-      color: #9AA79D;
-    }
-
-    .recipe-cards {
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .sect {
-      font-size: 10.5px;
-      letter-spacing: 0.2em;
-      color: var(--green);
-      font-weight: 600;
-      margin: 20px 0 10px;
-      text-transform: uppercase;
-    }
-
-    .recipe-card {
-      border: 1px solid var(--line);
-      border-left: 3px solid var(--green);
-      border-radius: 14px;
-      padding: 15px 16px;
-      cursor: pointer;
-      transition: all 0.3s;
-      background: var(--surface);
-    }
-
-    .recipe-card:hover {
-      box-shadow: 0 4px 12px rgba(24, 36, 28, 0.1);
-    }
-
-    .recipe-card-title {
-      font-family: 'Gowun Batang', serif;
-      font-size: 17px;
-      font-weight: 700;
-      margin-bottom: 6px;
-      color: var(--ink);
-    }
-
-    .recipe-card-info {
-      display: flex;
-      gap: 12px;
-      font-size: 11.5px;
-      color: var(--ink-soft);
-      font-weight: 300;
-    }
-
-    .again {
-      text-align: center;
-      margin-top: 16px;
-      font-size: 12px;
-      color: var(--green);
-      font-weight: 500;
-      cursor: pointer;
-    }
-
-    /* === 재고 탭 === */
-    #inventory {
-      padding: 0;
-      flex-direction: column;
-    }
-
-    .inventory-input-area {
-      padding: 16px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--line);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      flex: none;
-    }
-
-    .input {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 14px;
-      border: 1px solid var(--line);
-      border-radius: 11px;
-      font-size: 13px;
-      color: #9AA79D;
-      font-weight: 300;
-      background: var(--surface);
-    }
-
-    .input input {
-      border: none;
-      background: none;
-      font-size: 13px;
-      color: var(--ink);
-      font-family: 'IBM Plex Sans KR', sans-serif;
-      flex: 1;
-      outline: none;
-    }
-
-    .input i {
-      font-style: normal;
-      color: var(--green);
-      font-weight: 600;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .inventory-list {
-      border-top: 1px solid var(--line);
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-    }
-
-    .list {
-      border-top: 1px solid var(--line);
-    }
-
-    .inventory-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 13px 0;
-      border-bottom: 1px solid #EDF1E9;
-      font-size: 14px;
-      color: var(--ink);
-    }
-
-    .inventory-item:last-child {
-      border-bottom: none;
-    }
-
-    .inventory-item span {
-      color: #B9C2B6;
-      font-size: 15px;
-      cursor: pointer;
-      font-weight: 400;
-    }
-
-    /* === 레시피 탭 === */
-    #recipe {
-      padding: 0;
-      overflow-y: auto;
-    }
-
-    .recipe-view {
-      padding: 18px 16px;
-    }
-
-    .recipe-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-    }
-
-    .recipe-title {
-      font-family: 'Gowun Batang', serif;
-      font-size: 21px;
-      font-weight: 700;
-      color: var(--ink);
-    }
-
-    .recipe-heart {
-      font-size: 17px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      padding: 0;
-      color: var(--omija);
-    }
-
-    .recipe-meta {
-      font-size: 11.5px;
-      color: var(--ink-soft);
-      font-weight: 300;
-      line-height: 1.8;
-      margin-bottom: 16px;
-    }
-
-    .rule {
-      height: 1px;
-      background: var(--line);
-      margin: 16px 0;
-    }
-
-    .rsect {
-      font-size: 10.5px;
-      letter-spacing: 0.2em;
-      color: var(--green);
-      font-weight: 600;
-      margin: 16px 0 9px;
-      text-transform: uppercase;
-    }
-
-    .ingredient-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .ingredient-item {
-      display: flex;
-      gap: 9px;
-      font-size: 13px;
-      align-items: baseline;
-      color: var(--ink);
-    }
-
-    .ingredient-item.missing {
-      color: var(--ink-soft);
-    }
-
-    .ing-check {
-      font-size: 9px;
-      line-height: 1.9;
-      flex-shrink: 0;
-    }
-
-    .ing-check.have {
-      color: var(--green);
-    }
-
-    .ing-check.none {
-      color: #C2CBBE;
-    }
-
-    .ing-name {
-      font-weight: 400;
-    }
-
-    .ing-name.off {
-      color: #8E9C92;
-    }
-
-    .step-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .step-item {
-      display: flex;
-      gap: 10px;
-      font-size: 12.5px;
-      line-height: 1.65;
-      font-weight: 300;
-      color: var(--ink);
-    }
-
-    .step-number {
-      font-family: 'Gowun Batang', serif;
-      font-weight: 700;
-      color: var(--amber);
-      font-size: 12px;
-      flex: none;
-      min-width: 16px;
-    }
-
-    .video-list {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-    }
-
-    .video-item {
-      display: flex;
-      gap: 9px;
-      align-items: center;
-      font-size: 12.5px;
-      color: var(--ink);
-    }
-
-    .video-icon {
-      color: var(--omija);
-      font-size: 10px;
-      font-weight: 600;
-      flex: none;
-    }
-
-    .video-link {
-      color: var(--ink);
-      text-decoration: none;
-      font-weight: 400;
-    }
-
-    /* === 즐겨찾기 탭 === */
-    #favorites {
-      padding: 0;
-      flex-direction: column;
-    }
-
-    .favorites-list {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      overflow-y: auto;
-    }
-
-    .favorite-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 15px 18px;
-      border-bottom: 1px solid #EDF1E9;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .favorite-item:hover {
-      background: #F9FAF8;
-    }
-
-    .favorite-item:last-child {
-      border-bottom: none;
-    }
-
-    .favorite-info {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .favorite-name {
-      font-family: 'Gowun Batang', serif;
-      font-size: 15.5px;
-      font-weight: 700;
-      color: var(--ink);
-    }
-
-    .favorite-meta {
-      font-size: 11.5px;
-      color: var(--ink-soft);
-      font-weight: 300;
-      margin-top: 3px;
-    }
-
-    .favorite-heart {
-      color: var(--omija);
-      font-size: 17px;
-      cursor: pointer;
-    }
-
-    .favorites-empty {
-      text-align: center;
-      color: var(--ink-soft);
-      padding: 40px 16px;
-      font-size: 14px;
-      font-weight: 300;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* 다이얼로그 */
-    .dim {
-      position: fixed;
-      inset: 0;
-      background: rgba(24, 36, 28, 0.28);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-
-    .dim.show {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .dialog {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 22px 20px 16px;
-      width: 100%;
-      max-width: 280px;
-      text-align: center;
-      box-shadow: 0 14px 30px -14px rgba(24, 36, 28, 0.5);
-    }
-
-    .dialog p {
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--ink);
-    }
-
-    .dialog p b {
-      font-family: 'Gowun Batang', serif;
-      font-weight: 700;
-    }
-
-    .dialog .btns {
-      display: flex;
-      gap: 8px;
-      margin-top: 18px;
-    }
-
-    .dialog .btns div {
-      flex: 1;
-      padding: 11px 0;
-      border-radius: 9px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .cancel {
-      border: 1px solid var(--line);
-      color: var(--ink-soft);
-      background: var(--surface);
-    }
-
-    .cancel:hover {
-      background: #F5F8F2;
-    }
-
-    .confirm {
-      background: var(--omija);
-      color: white;
-    }
-
-    .confirm:hover {
-      background: #942839;
-    }
-
-    /* 반응형 */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --paper: #1a1a1a;
-        --surface: #0f0f0f;
-        --ink: #f5f5f5;
-        --ink-soft: #999;
-        --line: #2a2a2a;
-      }
-    }
+    :root{
+      --paper:#F5F8F3;
+      --surface:#FFFFFF;
+      --ink:#1B2620;
+      --ink-soft:#6E7D73;
+      --ink-faint:#A3AEA6;
+      --line:#E5EBE1;
+      --line-soft:#F0F4EE;
+      --green:#3E7D52;
+      --green-tint:#EDF5EF;
+      --omija:#C4394F;
+      --amber:#DD9B33;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      font-family:'IBM Plex Sans KR',sans-serif;
+      background:var(--paper);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased;
+      overscroll-behavior:none;
+    }
+    .app{
+      max-width:480px;margin:0 auto;height:100vh;height:100dvh;
+      background:var(--surface);display:flex;flex-direction:column;
+      position:relative;overflow:hidden;
+    }
+
+    /* ── 탭 바 ── */
+    .tabs{display:flex;flex:none;background:var(--surface);border-bottom:1px solid var(--line);
+      padding-top:env(safe-area-inset-top)}
+    .tabs button{
+      flex:1;padding:15px 0 12px;border:none;background:none;cursor:pointer;
+      font-family:inherit;font-size:12.5px;font-weight:400;color:var(--ink-soft);
+      border-bottom:2px solid transparent;transition:color .2s,border-color .2s;
+    }
+    .tabs button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--omija)}
+
+    /* ── 패널 ── */
+    .panel{display:none;flex:1;min-height:0;flex-direction:column}
+    .panel.on{display:flex}
+    .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .sticky{flex:none;background:var(--surface);border-bottom:1px solid var(--line);padding:14px 16px}
+
+    /* ── 입력 ── */
+    .field{
+      display:flex;align-items:center;gap:10px;
+      border:1px solid var(--line);border-radius:12px;padding:11px 14px;
+      background:var(--surface);transition:border-color .2s;
+    }
+    .field:focus-within{border-color:var(--green)}
+    .field input{
+      flex:1;border:none;outline:none;background:none;
+      font-family:inherit;font-size:13.5px;color:var(--ink);min-width:0;
+    }
+    .field input::placeholder{color:var(--ink-faint);font-weight:300}
+    .field .icon{font-size:13px;color:var(--ink-faint);flex:none}
+    .field .add{
+      font-style:normal;font-size:19px;line-height:1;color:var(--green);
+      font-weight:600;cursor:pointer;flex:none;padding:0 2px;user-select:none;
+    }
+
+    /* ── 섹션 라벨 ── */
+    .label{
+      display:flex;align-items:center;gap:8px;
+      font-size:10.5px;letter-spacing:.18em;color:var(--green);font-weight:600;
+      padding:20px 16px 10px;
+    }
+    .label .clear{
+      margin-left:auto;letter-spacing:0;font-size:11px;font-weight:400;
+      color:var(--ink-faint);cursor:pointer;text-decoration:underline;
+    }
+
+    /* ── 추천 카드 ── */
+    .cards{padding:0 16px 8px;display:flex;flex-direction:column;gap:10px}
+    .card{
+      border:1px solid var(--line);border-left:3px solid var(--green);
+      border-radius:14px;padding:15px 16px;cursor:pointer;background:var(--surface);
+      transition:box-shadow .2s,transform .1s;
+    }
+    .card:active{transform:scale(.99)}
+    .card:hover{box-shadow:0 3px 14px -6px rgba(27,38,32,.22)}
+    .card h3{font-family:'Gowun Batang',serif;font-size:17.5px;font-weight:700;margin-bottom:6px}
+    .card .meta{display:flex;gap:14px;font-size:11.5px;color:var(--ink-soft);font-weight:300}
+    .card .tag{
+      display:inline-block;margin-top:8px;font-size:10px;font-weight:500;
+      color:var(--green);background:var(--green-tint);
+      padding:3px 8px;border-radius:20px;letter-spacing:.02em;
+    }
+    .again{
+      display:block;width:calc(100% - 32px);margin:16px 16px 24px;padding:12px 0;
+      border:1px solid var(--line);border-radius:11px;background:var(--surface);
+      font-family:inherit;font-size:12.5px;font-weight:500;color:var(--green);cursor:pointer;
+    }
+    .again:active{background:var(--green-tint)}
+
+    /* ── 재고 ── */
+    .items{padding:4px 0 24px}
+    .item{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:13px 18px;border-bottom:1px solid var(--line-soft);font-size:14px;
+    }
+    .item .del{
+      color:var(--ink-faint);font-size:17px;line-height:1;cursor:pointer;
+      padding:2px 6px;user-select:none;
+    }
+    .empty{
+      padding:56px 32px;text-align:center;color:var(--ink-faint);
+      font-size:13px;font-weight:300;line-height:1.9;
+    }
+
+    /* ── 레시피 ── */
+    .rwrap{padding:18px 16px 32px}
+    .rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .rhead h2{font-family:'Gowun Batang',serif;font-size:22px;font-weight:700;line-height:1.35}
+    .heart{
+      border:none;background:none;cursor:pointer;font-size:19px;line-height:1;
+      color:var(--omija);flex:none;padding:2px 0 0;
+    }
+    .rmeta{margin-top:9px;font-size:11.5px;color:var(--ink-soft);font-weight:300;line-height:1.85}
+    .rule{height:1px;background:var(--line);margin:18px 0}
+    .rlabel{font-size:10.5px;letter-spacing:.18em;color:var(--green);font-weight:600;margin-bottom:11px}
+    .ings{display:flex;flex-direction:column;gap:9px}
+    .ing{display:flex;gap:10px;align-items:baseline;font-size:13.5px}
+    .ing .dot{font-size:9px;line-height:1.9;flex:none}
+    .ing.have .dot{color:var(--green)}
+    .ing.miss .dot{color:#CBD5CC}
+    .ing.miss span{color:var(--ink-soft)}
+    .steps{display:flex;flex-direction:column;gap:11px}
+    .step{display:flex;gap:11px;font-size:13px;line-height:1.7;font-weight:300}
+    .step b{
+      font-family:'Gowun Batang',serif;font-weight:700;color:var(--amber);
+      font-size:12.5px;flex:none;min-width:14px;
+    }
+    .ytbtn{
+      display:flex;align-items:center;justify-content:center;gap:9px;
+      width:100%;padding:13px 0;border:1px solid var(--line);border-radius:11px;
+      background:var(--surface);color:var(--ink);font-family:inherit;font-size:13px;
+      font-weight:500;cursor:pointer;text-decoration:none;
+    }
+    .ytbtn:active{background:var(--paper)}
+    .ytbtn .play{color:var(--omija);font-size:11px}
+
+    /* ── 즐겨찾기 ── */
+    .fav{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      padding:15px 18px;border-bottom:1px solid var(--line-soft);cursor:pointer;
+    }
+    .fav:active{background:var(--paper)}
+    .fav b{font-family:'Gowun Batang',serif;font-size:16px;font-weight:700;display:block}
+    .fav em{font-style:normal;font-size:11.5px;color:var(--ink-soft);font-weight:300;
+      display:block;margin-top:3px}
+    .fav .heart{font-size:17px;padding:0}
+
+    /* ── 다이얼로그 ── */
+    .dim{
+      position:absolute;inset:0;background:rgba(27,38,32,.26);z-index:900;
+      display:flex;align-items:center;justify-content:center;padding:28px;
+      opacity:0;pointer-events:none;transition:opacity .18s;
+    }
+    .dim.show{opacity:1;pointer-events:auto}
+    .dialog{
+      background:var(--surface);border-radius:16px;padding:24px 20px 16px;
+      width:100%;max-width:290px;text-align:center;
+      box-shadow:0 18px 40px -18px rgba(27,38,32,.5);
+      transform:translateY(6px);transition:transform .18s;
+    }
+    .dim.show .dialog{transform:none}
+    .dialog p{font-size:14.5px;line-height:1.6}
+    .dialog p b{font-family:'Gowun Batang',serif;font-weight:700}
+    .dialog .btns{display:flex;gap:8px;margin-top:20px}
+    .dialog button{
+      flex:1;padding:11px 0;border-radius:9px;font-family:inherit;
+      font-size:13px;font-weight:500;cursor:pointer;
+    }
+    .dialog .cancel{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft)}
+    .dialog .ok{border:none;background:var(--omija);color:#fff}
+
+    /* ── 토스트 ── */
+    .toast{
+      position:absolute;left:50%;bottom:32px;transform:translate(-50%,10px);
+      background:rgba(27,38,32,.92);color:#fff;font-size:12.5px;font-weight:400;
+      padding:11px 18px;border-radius:22px;z-index:950;white-space:nowrap;
+      opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    }
+    .toast.show{opacity:1;transform:translate(-50%,0)}
   </style>
 </head>
 <body>
-  <div class="app-container">
-    <!-- 탭 바 -->
-    <div class="tab-bar">
-      <button class="tab-button active" data-tab="home">홈</button>
-      <button class="tab-button" data-tab="inventory">재고</button>
-      <button class="tab-button" data-tab="recipe">레시피</button>
-      <button class="tab-button" data-tab="favorites">즐겨찾기</button>
-    </div>
+<div class="app">
 
-    <!-- 홈 탭 -->
-    <div id="home" class="tab-content active">
-      <div class="home-input-area">
-        <input type="text" id="homeInput" placeholder="오늘 뭐 먹지?">
-      </div>
-      <div class="recipe-cards">
-        <div class="sect">오늘의 추천</div>
-        <div class="recipe-card" onclick="openRecipe('애호박 새우볶음')">
-          <div class="recipe-card-title">애호박 새우볶음</div>
-          <div class="recipe-card-info">
-            <span>20분</span>
-            <span>310kcal</span>
-          </div>
-        </div>
-        <div class="recipe-card" onclick="openRecipe('두부김치')">
-          <div class="recipe-card-title">두부김치</div>
-          <div class="recipe-card-info">
-            <span>15분</span>
-            <span>280kcal</span>
-          </div>
-        </div>
-        <div class="recipe-card" onclick="openRecipe('달걀 대파국')">
-          <div class="recipe-card-title">달걀 대파국</div>
-          <div class="recipe-card-info">
-            <span>10분</span>
-            <span>140kcal</span>
-          </div>
-        </div>
-        <div class="again" onclick="refreshRecipes()">⟳ 다시 추천</div>
+  <nav class="tabs">
+    <button class="on" data-tab="home">홈</button>
+    <button data-tab="stock">재고</button>
+    <button data-tab="recipe">레시피</button>
+    <button data-tab="favs">즐겨찾기</button>
+  </nav>
+
+  <!-- 홈 -->
+  <section class="panel on" id="home">
+    <div class="sticky">
+      <div class="field">
+        <span class="icon">🔎</span>
+        <input id="ask" type="search" enterkeyhint="search" placeholder="오늘 뭐 먹지?">
       </div>
     </div>
+    <div class="scroll">
+      <div class="label"><span id="askLabel">오늘의 추천</span><span class="clear" id="askClear" hidden>초기화</span></div>
+      <div class="cards" id="cards"></div>
+      <button class="again" id="again">⟳ 다시 추천</button>
+    </div>
+  </section>
 
-    <!-- 재고 탭 -->
-    <div id="inventory" class="tab-content">
-      <div class="inventory-input-area">
-        <div class="input">
-          <input type="text" id="inventoryInput" placeholder="재료 입력">
-          <i onclick="addInventory()">+</i>
-        </div>
-      </div>
-      <div class="inventory-list" id="inventoryList">
-        <!-- 동적으로 생성됨 -->
+  <!-- 재고 -->
+  <section class="panel" id="stock">
+    <div class="sticky">
+      <div class="field">
+        <input id="stockInput" type="text" enterkeyhint="done" placeholder="재료 입력">
+        <i class="add" id="stockAdd">+</i>
       </div>
     </div>
+    <div class="scroll"><div class="items" id="stockList"></div></div>
+  </section>
 
-    <!-- 레시피 탭 -->
-    <div id="recipe" class="tab-content">
-      <div class="recipe-view">
-        <div class="recipe-header">
-          <div class="recipe-title" id="recipeName">레시피</div>
-          <button class="recipe-heart" id="favoriteBtn" onclick="toggleFavorite()">♡</button>
-        </div>
+  <!-- 레시피 -->
+  <section class="panel" id="recipe">
+    <div class="scroll" id="recipeBody"></div>
+  </section>
 
-        <div class="recipe-meta" id="recipeMeta">조리시간 · 인분 · 칼로리</div>
+  <!-- 즐겨찾기 -->
+  <section class="panel" id="favs">
+    <div class="scroll"><div class="items" id="favList"></div></div>
+  </section>
 
-        <div class="rule"></div>
-
-        <div class="rsect">재료</div>
-        <div class="ingredient-list" id="ingredientList">
-          <!-- 동적으로 생성됨 -->
-        </div>
-
-        <div class="rule"></div>
-
-        <div class="rsect">조리 순서</div>
-        <div class="step-list" id="stepList">
-          <!-- 동적으로 생성됨 -->
-        </div>
-
-        <div class="rule" id="videoRule" style="display:none;"></div>
-
-        <div class="rsect" id="videoSect" style="display:none;">참고 영상</div>
-        <div class="video-list" id="videoList">
-          <!-- 동적으로 생성됨 -->
-        </div>
-      </div>
-    </div>
-
-    <!-- 즐겨찾기 탭 -->
-    <div id="favorites" class="tab-content">
-      <div class="favorites-list" id="favoritesList">
-        <div class="favorites-empty">저장된 레시피가 없습니다</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- 삭제 확인 다이얼로그 -->
-  <div class="dim" id="deleteDialog">
+  <div class="dim" id="dim">
     <div class="dialog">
-      <p><b id="deleteItemName">항목</b>을(를) 폐기하시겠습니까?</p>
+      <p><b id="dlgName"></b>을(를) 폐기하시겠습니까?</p>
       <div class="btns">
-        <div class="cancel" onclick="cancelDelete()">취소</div>
-        <div class="confirm" onclick="confirmDelete()">폐기</div>
+        <button class="cancel" id="dlgCancel">취소</button>
+        <button class="ok" id="dlgOk">폐기</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // 상태 관리
-    const state = {
-      inventory: ['고추장', '달걀', '대파', '두부', '묵은지', '애호박', '양파', '참기름'],
-      favorites: [],
-      currentRecipe: null,
-      deleteTarget: null
-    };
+  <div class="toast" id="toast"></div>
+</div>
 
-    // 레시피 데이터
-    const recipes = {
-      '애호박 새우볶음': {
-        time: '20분',
-        servings: '2인분',
-        calories: '310kcal',
-        nutrition: '탄수 24g / 단백 18g / 지방 12g',
-        ingredients: [
-          { name: '애호박', amount: '1개', has: true },
-          { name: '대파', amount: '1/2대', has: true },
-          { name: '참기름', amount: '1작은술', has: true },
-          { name: '칵테일새우', amount: '150g', has: false },
-          { name: '다진 마늘', amount: '1큰술', has: false }
-        ],
-        steps: [
-          '애호박은 반달 모양으로 0.5cm 두께로 썬다.',
-          '팬에 기름을 두르고 다진 마늘을 약불에 볶아 향을 낸다.',
-          '새우를 넣어 겉면이 붉어질 때까지 볶는다.',
-          '애호박을 넣고 중불에서 약 3분간 볶다가 대파를 넣는다.',
-          '참기름을 둘러 맛을 낸다.'
-        ],
-        videos: [
-          { title: '애호박 새우볶음 만들기', url: '#' },
-          { title: '애호박 볶음 기본 레시피', url: '#' }
-        ]
-      },
-      '두부김치': {
-        time: '15분',
-        servings: '2인분',
-        calories: '280kcal',
-        nutrition: '탄수 18g / 단백 16g / 지방 14g',
-        ingredients: [
-          { name: '두부', amount: '1팩(300g)', has: true },
-          { name: '묵은지', amount: '100g', has: true },
-          { name: '고추장', amount: '1큰술', has: true },
-          { name: '참기름', amount: '1작은술', has: true },
-          { name: '다진 마늘', amount: '1작은술', has: false }
-        ],
-        steps: [
-          '두부를 한입 크기로 손으로 뜯어 그릇에 담는다.',
-          '묵은지는 한입 크기로 잘라 준비한다.',
-          '고추장, 참기름, 다진 마늘을 섞어 양념을 만든다.',
-          '두부와 묵은지에 양념을 버무려 5분간 숙성시킨다.',
-          '그릇에 담아 참기름을 최종 둘러낸다.'
-        ],
-        videos: []
-      },
-      '달걀 대파국': {
-        time: '10분',
-        servings: '2인분',
-        calories: '140kcal',
-        nutrition: '탄수 8g / 단백 12g / 지방 5g',
-        ingredients: [
-          { name: '계란', amount: '2개', has: true },
-          { name: '대파', amount: '1대', has: true },
-          { name: '국간장', amount: '1큰술', has: false },
-          { name: '물', amount: '4컵', has: true }
-        ],
-        steps: [
-          '물을 끓여 팔팔 끓게 한다.',
-          '국간장을 풀어 간을 맞춘다.',
-          '계란을 풀어 끓는 국에 천천히 흘려붓는다.',
-          '대파를 송송 썬어 떨어뜨린다.',
-          '30초 정도 끓인 후 불을 끈다.'
-        ],
-        videos: []
-      }
-    };
+<script>
+/* ─────────────────────────────────────────
+   상태
+───────────────────────────────────────── */
+const LS = { stock:'fridge.stock', favs:'fridge.favs' };
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} };
 
-    // 탭 전환
-    document.querySelectorAll('.tab-button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tabName = btn.dataset.tab;
-        switchTab(tabName);
-      });
-    });
+let RECIPES = [];
+const state = {
+  stock: load(LS.stock, ['고추장','달걀','대파','두부','묵은지','애호박','양파','참기름']),
+  favs:  load(LS.favs, []),
+  shown: [],        // 홈에 걸린 추천 5개
+  query: '',        // 현재 자연어 조건
+  current: null,    // 레시피 탭에 열린 요리
+  pending: null     // 폐기 확인 대기 항목
+};
 
-    function switchTab(tabName) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
+/* ─────────────────────────────────────────
+   재료 매칭
+───────────────────────────────────────── */
+const SYN = { '계란':['달걀'], '달걀':['계란'], '파':['대파'], '돼지':['돼지고기'], '소고기':['쇠고기'] };
+const expand = w => [w, ...(SYN[w] || [])];
 
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+// 재고 항목명이 재료명에 포함되면 보유. 1글자 재고는 완전일치만.
+function inStock(name){
+  return state.stock.some(s =>
+    expand(s).some(t => t.length === 1 ? name === t : name.includes(t))
+  );
+}
+const stockHits = r => r.ingredients.filter(i => inStock(i.name)).length;
 
-      if (tabName === 'inventory') {
-        renderInventory();
-      }
-    }
+/* ─────────────────────────────────────────
+   자연어 해석
+───────────────────────────────────────── */
+const VOCAB = {
+  flavor: {
+    '매콤':['매콤','매운','맵','칼칼','알싸'], '얼큰':['얼큰','시원한 국물','해장'],
+    '담백':['담백','슴슴','순한'], '고소':['고소','크리미'],
+    '새콤':['새콤','상큼','새콤달콤'], '달콤':['달콤','달달','단맛'], '짭짤':['짭짤','짭조름']
+  },
+  type: {
+    '국찌개':['국','찌개','탕','스프','수프'], '볶음':['볶음','볶은'], '무침':['무침','나물'],
+    '조림':['조림','졸임'], '구이':['구이','구운','스테이크'], '튀김':['튀김','튀긴','전'],
+    '면':['면','국수','파스타','라면'], '샐러드':['샐러드'], '밥':['밥','덮밥','볶음밥'],
+    '빵디저트':['빵','디저트','케이크','샌드위치','팬케이크'], '음료':['음료','주스','스무디','에이드']
+  },
+  cuisine: {
+    '한식':['한식','한국'], '양식':['양식','서양','이탈리'], '중식':['중식','중국','중화'],
+    '일식':['일식','일본'], '베트남식':['베트남'], '태국식':['태국','타이'], '간식':['간식','후식']
+  },
+  situation: {
+    '술안주':['안주','술'], '건강식':['건강','다이어트','가벼운','담백한 한 끼'],
+    '아이들요리':['아이','애들','유아','어린이'], '간편식':['간편','간단','빠른','후딱','금방','쉬운']
+  }
+};
 
-    // 재고 추가
-    function addInventory() {
-      const input = document.getElementById('inventoryInput');
-      const value = input.value.trim();
+// 코퍼스에 등장하는 주재료 목록 (긴 이름 우선 매칭)
+let MAIN_INDEX = [];
 
-      if (!value) return;
-      if (state.inventory.some(i => i === value)) {
-        alert('이미 등록된 재료입니다');
-        return;
-      }
+function parseQuery(q){
+  const want = { main:[], flavor:[], type:null, cuisine:null, situation:[], maxTime:null };
+  if (!q) return want;
 
-      state.inventory.push(value);
-      state.inventory.sort();
-      input.value = '';
-      renderInventory();
-    }
+  MAIN_INDEX.forEach(m => { if (q.includes(m)) want.main.push(m) });
+  Object.entries(SYN).forEach(([k,vs]) => {
+    if (k.length >= 2 && q.includes(k)) vs.forEach(v => { if (MAIN_INDEX.includes(v) && !want.main.includes(v)) want.main.push(v) });
+  });
 
-    // 재고 렌더링
-    function renderInventory() {
-      const list = document.getElementById('inventoryList');
-      list.innerHTML = '<div class="list">' + state.inventory.map(item => `
-        <div class="inventory-item">
-          <span>${item}</span>
-          <span onclick="deleteInventory('${item}')">×</span>
-        </div>
-      `).join('') + '</div>';
-    }
+  for (const [tag, words] of Object.entries(VOCAB.flavor))
+    if (words.some(w => q.includes(w))) want.flavor.push(tag);
+  for (const [tag, words] of Object.entries(VOCAB.situation))
+    if (words.some(w => q.includes(w))) want.situation.push(tag);
+  for (const [tag, words] of Object.entries(VOCAB.type))
+    if (!want.type && words.some(w => q.includes(w))) want.type = tag;
+  for (const [tag, words] of Object.entries(VOCAB.cuisine))
+    if (!want.cuisine && words.some(w => q.includes(w))) want.cuisine = tag;
 
-    // 재고 삭제
-    function deleteInventory(item) {
-      state.deleteTarget = item;
-      document.getElementById('deleteItemName').textContent = item;
-      document.getElementById('deleteDialog').classList.add('show');
-    }
+  const m = q.match(/(\d+)\s*분/);
+  if (m) want.maxTime = +m[1];
+  else if (want.situation.includes('간편식')) want.maxTime = 15;
 
-    function cancelDelete() {
-      document.getElementById('deleteDialog').classList.remove('show');
-      state.deleteTarget = null;
-    }
+  return want;
+}
 
-    function confirmDelete() {
-      state.inventory = state.inventory.filter(i => i !== state.deleteTarget);
-      renderInventory();
-      document.getElementById('deleteDialog').classList.remove('show');
-      state.deleteTarget = null;
-    }
+function score(r, want){
+  let s = 0;
+  want.main.forEach(m => {
+    if (r.main.includes(m)) s += 10;
+    else if (r.ingredients.some(i => i.name.includes(m))) s += 5;
+  });
+  want.flavor.forEach(f => { if (r.flavor.includes(f)) s += 6 });
+  want.situation.forEach(x => { if (r.situation.includes(x)) s += 5 });
+  if (want.type && r.type === want.type) s += 5;
+  if (want.cuisine && r.cuisine === want.cuisine) s += 5;
+  if (want.maxTime && r.time <= want.maxTime) s += 4;
+  s += stockHits(r) * 1.2;          // 재고는 제약이 아니라 가산점
+  return s;
+}
 
-    // 레시피 열기
-    function openRecipe(recipeName) {
-      state.currentRecipe = recipeName;
-      const recipe = recipes[recipeName];
-      if (!recipe) return;
+// 항상 5개를 채운다. 조건에 맞는 게 부족하면 점수가 낮은 것으로 이어 채운다.
+function pick(n = 5){
+  const want = parseQuery(state.query);
+  const jitter = state.query ? 0.8 : 2.6;
+  return RECIPES
+    .map(r => ({ r, s: score(r, want) + Math.random() * jitter }))
+    .sort((a,b) => b.s - a.s)
+    .slice(0, n)
+    .map(x => x.r);
+}
 
-      // 정보 업데이트
-      document.getElementById('recipeName').textContent = recipeName;
-      document.getElementById('recipeMeta').textContent = `${recipe.time} · ${recipe.servings} · ${recipe.calories}\n${recipe.nutrition}`;
+/* ─────────────────────────────────────────
+   렌더링
+───────────────────────────────────────── */
+const $ = id => document.getElementById(id);
 
-      // 재료
-      const ingredientList = document.getElementById('ingredientList');
-      ingredientList.innerHTML = recipe.ingredients.map(ing => {
-        const hasItem = state.inventory.some(i => i === ing.name);
-        return `
-          <div class="ingredient-item ${!hasItem ? 'missing' : ''}">
-            <span class="ing-check ${hasItem ? 'have' : 'none'}">●</span>
-            <span class="ing-name ${!hasItem ? 'off' : ''}">${ing.name} ${ing.amount}</span>
-          </div>
-        `;
-      }).join('');
+function tab(name){
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === name));
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('.scroll').forEach(s => s.scrollTop = 0);
+}
 
-      // 조리순서
-      const stepList = document.getElementById('stepList');
-      stepList.innerHTML = recipe.steps.map((step, idx) => `
-        <div class="step-item">
-          <div class="step-number">${idx + 1}</div>
-          <div>${step}</div>
-        </div>
-      `).join('');
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
 
-      // 참고 영상
-      const videoList = document.getElementById('videoList');
-      if (recipe.videos.length > 0) {
-        document.getElementById('videoRule').style.display = 'block';
-        document.getElementById('videoSect').style.display = 'block';
-        videoList.innerHTML = recipe.videos.map(vid => `
-          <div class="video-item">
-            <span class="video-icon">▶</span>
-            <a href="${vid.url}" class="video-link" target="_blank">${vid.title}</a>
-          </div>
-        `).join('');
-      } else {
-        document.getElementById('videoRule').style.display = 'none';
-        document.getElementById('videoSect').style.display = 'none';
-        videoList.innerHTML = '';
-      }
+function renderCards(){
+  $('askLabel').textContent = state.query ? `"${state.query}" 추천` : '오늘의 추천';
+  $('askClear').hidden = !state.query;
+  $('cards').innerHTML = state.shown.map(r => `
+    <div class="card" data-id="${r.id}">
+      <h3>${r.name}</h3>
+      <div class="meta"><span>${r.time}분</span><span>${r.calories}kcal</span></div>
+      <span class="tag">${r.cuisine}</span>
+    </div>`).join('');
+}
 
-      switchTab('recipe');
+function renderStock(){
+  const list = $('stockList');
+  if (!state.stock.length){
+    list.innerHTML = `<div class="empty">냉장고가 비어 있습니다.<br>위에 재료를 적어 추가해 주세요.</div>`;
+    return;
+  }
+  list.innerHTML = state.stock.map(n => `
+    <div class="item"><span>${n}</span><span class="del" data-name="${n}">×</span></div>
+  `).join('');
+}
 
-      // 즐겨찾기 상태 업데이트
-      const isFavorited = state.favorites.some(f => f.name === recipeName);
-      document.getElementById('favoriteBtn').textContent = isFavorited ? '❤' : '♡';
-    }
+function renderRecipe(){
+  const r = state.current;
+  const body = $('recipeBody');
+  if (!r){
+    body.innerHTML = `<div class="empty">아직 고른 요리가 없습니다.<br>홈에서 추천 카드를 눌러 주세요.</div>`;
+    return;
+  }
+  const liked = state.favs.some(f => f.id === r.id);
+  const yt = `https://www.youtube.com/results?search_query=${encodeURIComponent(r.name + ' 레시피')}`;
+  const n = r.nutrition;
 
-    // 즐겨찾기 토글
-    function toggleFavorite() {
-      if (!state.currentRecipe) return;
+  body.innerHTML = `
+    <div class="rwrap">
+      <div class="rhead">
+        <h2>${r.name}</h2>
+        <button class="heart" id="like">${liked ? '♥' : '♡'}</button>
+      </div>
+      <div class="rmeta">
+        ${r.time}분 · ${r.servings}인분 · ${r.calories}kcal<br>
+        탄수 ${n.carb}g / 단백 ${n.protein}g / 지방 ${n.fat}g
+      </div>
 
-      const idx = state.favorites.findIndex(f => f.name === state.currentRecipe);
-      if (idx >= 0) {
-        state.favorites.splice(idx, 1);
-      } else {
-        state.favorites.push({
-          name: state.currentRecipe,
-          savedAt: new Date()
-        });
-      }
+      <div class="rule"></div>
+      <div class="rlabel">재료</div>
+      <div class="ings">
+        ${r.ingredients.map(i => {
+          const has = inStock(i.name);
+          return `<div class="ing ${has ? 'have' : 'miss'}">
+            <span class="dot">${has ? '●' : '○'}</span><span>${i.name} ${i.amount}</span>
+          </div>`;
+        }).join('')}
+      </div>
 
-      const isFavorited = state.favorites.some(f => f.name === state.currentRecipe);
-      document.getElementById('favoriteBtn').textContent = isFavorited ? '❤' : '♡';
-      renderFavorites();
-    }
+      <div class="rule"></div>
+      <div class="rlabel">조리 순서</div>
+      <div class="steps">
+        ${r.steps.map((s, i) => `<div class="step"><b>${i + 1}</b><span>${s}</span></div>`).join('')}
+      </div>
 
-    // 즐겨찾기 렌더링
-    function renderFavorites() {
-      const list = document.getElementById('favoritesList');
-      if (state.favorites.length === 0) {
-        list.innerHTML = '<div class="favorites-empty">저장된 레시피가 없습니다</div>';
-      } else {
-        const sorted = [...state.favorites].reverse();
-        list.innerHTML = sorted.map(fav => {
-          const recipe = recipes[fav.name];
-          return `
-            <div class="favorite-item" onclick="openRecipe('${fav.name}')">
-              <div class="favorite-info">
-                <div class="favorite-name">${fav.name}</div>
-                <div class="favorite-meta">${recipe.time} · ${recipe.calories}</div>
-              </div>
-              <span class="favorite-heart" onclick="event.stopPropagation(); toggleFavoriteFromList('${fav.name}')">❤</span>
-            </div>
-          `;
-        }).join('');
-      }
-    }
+      <div class="rule"></div>
+      <div class="rlabel">참고 영상</div>
+      <a class="ytbtn" href="${yt}" target="_blank" rel="noopener">
+        <span class="play">▶</span><span>유튜브에서 "${r.name}" 영상 보기</span>
+      </a>
+    </div>`;
 
-    function toggleFavoriteFromList(recipeName) {
-      state.favorites = state.favorites.filter(f => f.name !== recipeName);
-      renderFavorites();
-    }
+  $('like').onclick = toggleFav;
+}
 
-    // 새로고침
-    function refreshRecipes() {
-      // 실제로는 여기서 API를 호출하여 새로운 추천을 받음
-      alert('새로운 추천을 받았습니다');
-    }
+function renderFavs(){
+  const list = $('favList');
+  if (!state.favs.length){
+    list.innerHTML = `<div class="empty">저장된 레시피가 없습니다.<br>레시피 화면에서 ♡ 를 눌러 보세요.</div>`;
+    return;
+  }
+  list.innerHTML = [...state.favs].reverse().map(r => `
+    <div class="fav" data-id="${r.id}">
+      <span><b>${r.name}</b><em>${r.time}분 · ${r.calories}kcal</em></span>
+      <button class="heart" data-un="${r.id}">♥</button>
+    </div>`).join('');
+}
 
-    // Enter 키로 재고 추가
-    document.getElementById('inventoryInput')?.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') addInventory();
-    });
+/* ─────────────────────────────────────────
+   동작
+───────────────────────────────────────── */
+function openRecipe(id){
+  // 즐겨찾기에 저장된 사본이 있으면 그것을, 없으면 원본을 연다.
+  state.current = state.favs.find(f => f.id === id) || RECIPES.find(r => r.id === id);
+  renderRecipe();     // ●/○ 는 매번 현재 재고로 다시 판정된다
+  tab('recipe');
+}
 
-    // Service Worker 등록
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(err => {
-        console.log('Service Worker 등록 실패:', err);
-      });
-    }
+function toggleFav(){
+  const r = state.current;
+  if (!r) return;
+  const i = state.favs.findIndex(f => f.id === r.id);
+  if (i >= 0) state.favs.splice(i, 1);
+  else state.favs.push(JSON.parse(JSON.stringify(r)));   // 레시피 내용을 통째로 저장
+  save(LS.favs, state.favs);
+  renderRecipe();
+  renderFavs();
+}
 
-    // 초기화
-    renderInventory();
-    renderFavorites();
-  </script>
+function addStock(){
+  const input = $('stockInput');
+  const v = input.value.trim();
+  if (!v) return;
+  if (state.stock.includes(v)){
+    toast('이미 등록된 재료입니다');
+    input.value = '';
+    return;
+  }
+  state.stock.push(v);
+  state.stock.sort((a, b) => a.localeCompare(b, 'ko'));
+  save(LS.stock, state.stock);
+  input.value = '';
+  renderStock();
+}
+
+/* ─────────────────────────────────────────
+   이벤트
+───────────────────────────────────────── */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => tab(b.dataset.tab));
+
+$('cards').onclick = e => {
+  const c = e.target.closest('.card');
+  if (c) openRecipe(c.dataset.id);
+};
+
+// 자연어 입력 — 추천 목록만 갈아끼운다. 레시피 탭으로 넘어가지 않는다.
+$('ask').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  e.target.blur();
+  state.query = e.target.value.trim();
+  state.shown = pick();
+  renderCards();
+});
+$('askClear').onclick = () => {
+  state.query = '';
+  $('ask').value = '';
+  state.shown = pick();
+  renderCards();
+};
+
+// 재고 변경은 여기서야 반영된다
+$('again').onclick = () => { state.shown = pick(); renderCards() };
+
+$('stockAdd').onclick = addStock;
+$('stockInput').addEventListener('keydown', e => { if (e.key === 'Enter') addStock() });
+
+$('stockList').onclick = e => {
+  const d = e.target.closest('.del');
+  if (!d) return;
+  state.pending = d.dataset.name;
+  $('dlgName').textContent = state.pending;
+  $('dim').classList.add('show');
+};
+$('dlgCancel').onclick = () => { $('dim').classList.remove('show'); state.pending = null };
+$('dlgOk').onclick = () => {
+  state.stock = state.stock.filter(x => x !== state.pending);
+  save(LS.stock, state.stock);
+  renderStock();
+  if (state.current) renderRecipe();
+  $('dim').classList.remove('show');
+  state.pending = null;
+};
+
+$('favList').onclick = e => {
+  const un = e.target.closest('[data-un]');
+  if (un){
+    state.favs = state.favs.filter(f => f.id !== un.dataset.un);
+    save(LS.favs, state.favs);
+    renderFavs();
+    if (state.current) renderRecipe();
+    return;
+  }
+  const f = e.target.closest('.fav');
+  if (f) openRecipe(f.dataset.id);
+};
+
+/* ─────────────────────────────────────────
+   기동
+───────────────────────────────────────── */
+function boot(data){
+  RECIPES = data;
+  MAIN_INDEX = [...new Set(RECIPES.flatMap(r => r.main))]
+    .filter(m => m.length >= 2)          // 1글자 재료는 오탐이 많아 자연어 매칭에서 제외
+    .sort((a, b) => b.length - a.length);
+  state.shown = pick();
+  renderCards();
+  renderStock();
+  renderRecipe();
+  renderFavs();
+}
+
+// 단일 파일 미리보기에서는 RECIPES_INLINE 이 먼저 주입된다.
+if (typeof RECIPES_INLINE !== 'undefined') boot(RECIPES_INLINE);
+else fetch('recipes.json').then(r => r.json()).then(boot).catch(() => {
+  $('cards').innerHTML = `<div class="empty">레시피를 불러오지 못했습니다.</div>`;
+});
+
+if ('serviceWorker' in navigator)
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+</script>
 </body>
 </html>
