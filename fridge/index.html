@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="description" content="냉장고에 있는 재료로 오늘 뭘 해 먹을지 골라 줍니다.">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="냉장고">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>하야의 냉장고</title>
+  <style>
+    :root{
+      --paper:#F5F8F3;
+      --surface:#FFFFFF;
+      --ink:#1B2620;
+      --ink-soft:#6E7D73;
+      --ink-faint:#A3AEA6;
+      --line:#E5EBE1;
+      --line-soft:#F0F4EE;
+      --green:#3E7D52;
+      --green-tint:#EDF5EF;
+      --omija:#C4394F;
+      --amber:#DD9B33;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      font-family:'IBM Plex Sans KR',sans-serif;
+      background:var(--paper);
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased;
+      overscroll-behavior:none;
+    }
+    .app{
+      max-width:480px;margin:0 auto;height:100vh;height:100dvh;
+      padding-bottom:env(safe-area-inset-bottom);
+      background:var(--surface);display:flex;flex-direction:column;
+      position:relative;overflow:hidden;
+    }
+
+    /* ── 탭 바 ── */
+    .tabs{display:flex;flex:none;background:var(--surface);border-bottom:1px solid var(--line);
+      padding-top:env(safe-area-inset-top)}
+    .tabs button{
+      flex:1;padding:15px 0 12px;border:none;background:none;cursor:pointer;
+      font-family:inherit;font-size:12.5px;font-weight:400;color:var(--ink-soft);
+      border-bottom:2px solid transparent;transition:color .2s,border-color .2s;
+    }
+    .tabs button.on{color:var(--ink);font-weight:600;border-bottom-color:var(--omija)}
+
+    /* ── 패널 ── */
+    .panel{display:none;flex:1;min-height:0;flex-direction:column}
+    .panel.on{display:flex}
+    .scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+    .sticky{flex:none;background:var(--surface);border-bottom:1px solid var(--line);padding:14px 16px}
+
+    /* ── 입력 ── */
+    .field{
+      display:flex;align-items:center;gap:10px;
+      border:1px solid var(--line);border-radius:12px;padding:11px 14px;
+      background:var(--surface);transition:border-color .2s;
+    }
+    .field:focus-within{border-color:var(--green)}
+    .field input{
+      flex:1;border:none;outline:none;background:none;
+      font-family:inherit;font-size:13.5px;color:var(--ink);min-width:0;
+    }
+    .field input::placeholder{color:var(--ink-faint);font-weight:300}
+    .field .icon{font-size:13px;color:var(--ink-faint);flex:none}
+    .field .add{
+      font-style:normal;font-size:19px;line-height:1;color:var(--green);
+      font-weight:600;cursor:pointer;flex:none;padding:0 2px;user-select:none;
+    }
+
+    /* ── 카테고리 칩 ── */
+    .picker{display:flex;flex-direction:column;gap:7px;margin-top:11px}
+    .row{display:flex;align-items:center;gap:9px;min-width:0}
+    .rowname{
+      flex:none;font-size:10.5px;font-weight:600;color:var(--ink-faint);
+      letter-spacing:.06em;white-space:nowrap;width:26px;
+    }
+    .chips{
+      display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;position:relative;
+      scrollbar-width:none;-webkit-overflow-scrolling:touch;
+    }
+    .chips::-webkit-scrollbar{display:none}
+    .chip{
+      flex:none;padding:5px 11px;border-radius:20px;cursor:pointer;
+      font-size:11.5px;font-weight:400;white-space:nowrap;
+      border:1px solid var(--line);background:var(--surface);color:var(--ink-soft);
+      transition:background .15s,color .15s,border-color .15s;user-select:none;
+    }
+    .chip.on{background:var(--green);border-color:var(--green);color:#fff;font-weight:500}
+
+    /* ── 섹션 라벨 ── */
+    .label{
+      display:flex;align-items:center;gap:8px;
+      font-size:10.5px;letter-spacing:.18em;color:var(--green);font-weight:600;
+      padding:20px 16px 10px;
+    }
+    .label .clear{
+      margin-left:auto;letter-spacing:0;font-size:11px;font-weight:400;
+      color:var(--ink-faint);cursor:pointer;text-decoration:underline;
+    }
+
+    .notice{
+      margin:0 16px 12px;padding:10px 13px;border-radius:10px;
+      background:var(--paper);border:1px solid var(--line);
+      font-size:11.5px;font-weight:300;color:var(--ink-soft);line-height:1.6;
+    }
+
+    /* ── 추천 카드 ── */
+    .cards{padding:0 16px 8px;display:flex;flex-direction:column;gap:10px}
+    .card{
+      border:1px solid var(--line);border-left:3px solid var(--green);
+      border-radius:14px;padding:15px 16px;cursor:pointer;background:var(--surface);
+      transition:box-shadow .2s,transform .1s;
+    }
+    .card:active{transform:scale(.99)}
+    .card:hover{box-shadow:0 3px 14px -6px rgba(27,38,32,.22)}
+    .card h3{font-family:'Gowun Batang',serif;font-size:17.5px;font-weight:700;margin-bottom:6px}
+    .card .meta{display:flex;gap:14px;font-size:11.5px;color:var(--ink-soft);font-weight:300}
+    .card .tag{
+      display:inline-block;margin-top:8px;font-size:10px;font-weight:500;
+      color:var(--green);background:var(--green-tint);
+      padding:3px 8px;border-radius:20px;letter-spacing:.02em;
+    }
+    .again{
+      display:block;width:calc(100% - 32px);margin:16px 16px 24px;padding:12px 0;
+      border:1px solid var(--line);border-radius:11px;background:var(--surface);
+      font-family:inherit;font-size:12.5px;font-weight:500;color:var(--green);cursor:pointer;
+    }
+    .again:active{background:var(--green-tint)}
+
+    /* ── 냉장고 ── */
+    .items{padding:4px 0 24px}
+    .item{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:13px 18px;border-bottom:1px solid var(--line-soft);font-size:14px;
+    }
+    .item .del{
+      color:var(--ink-faint);font-size:17px;line-height:1;cursor:pointer;
+      padding:2px 6px;user-select:none;
+    }
+    .empty{
+      padding:56px 32px;text-align:center;color:var(--ink-faint);
+      font-size:13px;font-weight:300;line-height:1.9;
+    }
+
+    /* ── 레시피 ── */
+    .rwrap{padding:18px 16px 32px}
+    .rhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .rhead h2{font-family:'Gowun Batang',serif;font-size:22px;font-weight:700;line-height:1.35}
+    .heart{
+      border:none;background:none;cursor:pointer;font-size:19px;line-height:1;
+      color:var(--omija);flex:none;padding:2px 0 0;
+    }
+    .rmeta{margin-top:9px;font-size:11.5px;color:var(--ink-soft);font-weight:300;line-height:1.85}
+    .rule{height:1px;background:var(--line);margin:18px 0}
+    .rlabel{font-size:10.5px;letter-spacing:.18em;color:var(--green);font-weight:600;margin-bottom:11px}
+    .ings{display:flex;flex-direction:column;gap:9px}
+    .ing{display:flex;gap:10px;align-items:baseline;font-size:13.5px}
+    .ing .dot{font-size:9px;line-height:1.9;flex:none}
+    .ing.have .dot{color:var(--green)}
+    .ing.miss .dot{color:#CBD5CC}
+    .ing.miss span{color:var(--ink-soft)}
+    .steps{display:flex;flex-direction:column;gap:11px}
+    .step{display:flex;gap:11px;font-size:13px;line-height:1.7;font-weight:300}
+    .step b{
+      font-family:'Gowun Batang',serif;font-weight:700;color:var(--amber);
+      font-size:12.5px;flex:none;min-width:14px;
+    }
+    .ytbtn{
+      display:flex;align-items:center;justify-content:center;gap:9px;
+      width:100%;padding:13px 0;border:1px solid var(--line);border-radius:11px;
+      background:var(--surface);color:var(--ink);font-family:inherit;font-size:13px;
+      font-weight:500;cursor:pointer;text-decoration:none;
+    }
+    .ytbtn:active{background:var(--paper)}
+    .ytbtn .play{color:var(--omija);font-size:11px}
+
+    /* ── 즐겨찾기 ── */
+    .fav{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;
+      padding:15px 18px;border-bottom:1px solid var(--line-soft);cursor:pointer;
+    }
+    .fav:active{background:var(--paper)}
+    .fav b{font-family:'Gowun Batang',serif;font-size:16px;font-weight:700;display:block}
+    .fav em{font-style:normal;font-size:11.5px;color:var(--ink-soft);font-weight:300;
+      display:block;margin-top:3px}
+    .fav .heart{font-size:17px;padding:0}
+
+    /* ── 다이얼로그 ── */
+    .dim{
+      position:absolute;inset:0;background:rgba(27,38,32,.26);z-index:900;
+      display:flex;align-items:center;justify-content:center;padding:28px;
+      opacity:0;pointer-events:none;transition:opacity .18s;
+    }
+    .dim.show{opacity:1;pointer-events:auto}
+    .dialog{
+      background:var(--surface);border-radius:16px;padding:24px 20px 16px;
+      width:100%;max-width:290px;text-align:center;
+      box-shadow:0 18px 40px -18px rgba(27,38,32,.5);
+      transform:translateY(6px);transition:transform .18s;
+    }
+    .dim.show .dialog{transform:none}
+    .dialog p{font-size:14.5px;line-height:1.6}
+    .dialog p b{font-family:'Gowun Batang',serif;font-weight:700}
+    .dialog .btns{display:flex;gap:8px;margin-top:20px}
+    .dialog button{
+      flex:1;padding:11px 0;border-radius:9px;font-family:inherit;
+      font-size:13px;font-weight:500;cursor:pointer;
+    }
+    .dialog .cancel{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft)}
+    .dialog .ok{border:none;background:var(--omija);color:#fff}
+
+    /* ── 토스트 ── */
+    .toast{
+      position:absolute;left:50%;bottom:32px;transform:translate(-50%,10px);
+      background:rgba(27,38,32,.92);color:#fff;font-size:12.5px;font-weight:400;
+      padding:11px 18px;border-radius:22px;z-index:950;white-space:nowrap;
+      opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;
+    }
+    .toast.show{opacity:1;transform:translate(-50%,0)}
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <nav class="tabs">
+    <button class="on" data-tab="home">홈</button>
+    <button data-tab="stock">냉장고</button>
+    <button data-tab="recipe">레시피</button>
+    <button data-tab="favs">즐겨찾기</button>
+  </nav>
+
+  <!-- 홈 -->
+  <section class="panel on" id="home">
+    <div class="sticky">
+      <div class="field">
+        <span class="icon">🔎</span>
+        <input id="ask" type="search" enterkeyhint="search" placeholder="오늘 뭐 먹지?">
+      </div>
+      <div class="picker">
+        <div class="row"><span class="rowname">나라</span><div class="chips" id="chipsCuisine"></div></div>
+        <div class="row"><span class="rowname">자리</span><div class="chips" id="chipsSituation"></div></div>
+      </div>
+    </div>
+    <div class="scroll">
+      <div class="label"><span id="askLabel">오늘의 추천</span><span class="clear" id="askClear" hidden>초기화</span></div>
+      <div class="notice" id="notice" hidden></div>
+      <div class="cards" id="cards"></div>
+      <button class="again" id="again">⟳ 다시 추천</button>
+    </div>
+  </section>
+
+  <!-- 냉장고 -->
+  <section class="panel" id="stock">
+    <div class="sticky">
+      <div class="field">
+        <input id="stockInput" type="text" enterkeyhint="done" placeholder="무엇이 들어 있나요?">
+        <i class="add" id="stockAdd">+</i>
+      </div>
+    </div>
+    <div class="scroll"><div class="items" id="stockList"></div></div>
+  </section>
+
+  <!-- 레시피 -->
+  <section class="panel" id="recipe">
+    <div class="scroll" id="recipeBody"></div>
+  </section>
+
+  <!-- 즐겨찾기 -->
+  <section class="panel" id="favs">
+    <div class="scroll"><div class="items" id="favList"></div></div>
+  </section>
+
+  <div class="dim" id="dim">
+    <div class="dialog">
+      <p><b id="dlgName"></b><span id="dlgJosa">를</span> 냉장고에서 뺄까요?</p>
+      <div class="btns">
+        <button class="cancel" id="dlgCancel">그대로 두기</button>
+        <button class="ok" id="dlgOk">빼기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────
+   상태
+───────────────────────────────────────── */
+const LS = { stock:'fridge.stock', favs:'fridge.favs' };
+const load = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d } catch { return d } };
+const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)) } catch {} };
+
+const CUISINES   = ['자유','한식','중식','일식','기타'];
+const SITUATIONS = ['자유','가정식','술안주','아이들요리','간식','기타'];
+
+// 칩의 '기타' 는 저장된 태그가 아니라 "나머지 전부" 를 뜻한다.
+const NAMED_CUISINE   = ['한식','중식','일식'];
+const NAMED_SITUATION = ['가정식','술안주','아이들요리','간식'];
+
+let RECIPES = [];
+const state = {
+  cuisine: '자유',      // 나라 — 자유면 전체
+  situation: '자유',    // 자리 — 자유면 전체
+  stock: load(LS.stock, ['고추장','달걀','대파','두부','묵은지','애호박','양파','참기름']),
+  favs:  load(LS.favs, []),
+  shown: [],        // 홈에 걸린 추천 5개
+  query: '',        // 현재 자연어 조건
+  notice: null,     // 조건을 못 채웠을 때 띄우는 안내
+  current: null,    // 레시피 탭에 열린 요리
+  pending: null     // 폐기 확인 대기 항목
+};
+
+// 받침 유무에 따라 조사를 고른다 (대파를 / 묵은지를 / 달걀을)
+function josa(w, withBatchim, without){
+  const c = w.charCodeAt(w.length - 1);
+  if (c < 0xAC00 || c > 0xD7A3) return without;
+  return (c - 0xAC00) % 28 ? withBatchim : without;
+}
+
+/* ─────────────────────────────────────────
+   재료 매칭
+───────────────────────────────────────── */
+const SYN = { '계란':['달걀'], '달걀':['계란'], '파':['대파'], '돼지':['돼지고기'], '소고기':['쇠고기'] };
+const expand = w => [w, ...(SYN[w] || [])];
+
+// 재고 항목명이 재료명에 포함되면 보유. 1글자 재고는 완전일치만.
+function inStock(name){
+  return state.stock.some(s =>
+    expand(s).some(t => t.length === 1 ? name === t : name.includes(t))
+  );
+}
+const stockHits = r => r.ingredients.filter(i => inStock(i.name)).length;
+
+/* ─────────────────────────────────────────
+   자연어 해석
+───────────────────────────────────────── */
+const VOCAB = {
+  flavor: {
+    '매콤':['매콤','매운','맵','칼칼','알싸'], '얼큰':['얼큰','시원한 국물','해장'],
+    '담백':['담백','슴슴','순한','건강','가벼운','다이어트'], '고소':['고소','크리미'],
+    '새콤':['새콤','상큼','새콤달콤'], '달콤':['달콤','달달','단맛'], '짭짤':['짭짤','짭조름']
+  },
+  type: {
+    '국찌개':['국','찌개','탕','스프','수프'], '볶음':['볶음','볶은'], '무침':['무침','나물'],
+    '조림':['조림','졸임'], '구이':['구이','구운','스테이크'], '튀김':['튀김','튀긴','전'],
+    '면':['면','국수','파스타','라면'], '샐러드':['샐러드'], '밥':['밥','덮밥','볶음밥'],
+    '빵디저트':['빵','디저트','케이크','샌드위치','팬케이크'], '음료':['음료','주스','스무디','에이드']
+  },
+  cuisine: {
+    '한식':['한식','한국'], '양식':['양식','서양','이탈리'], '중식':['중식','중국','중화'],
+    '일식':['일식','일본'], '베트남식':['베트남'], '태국식':['태국','타이']
+  },
+  situation: {
+    '가정식':['가정식','집밥','밥반찬','반찬','밥상'], '술안주':['안주','술'],
+    '아이들요리':['아이','애들','유아','어린이'], '간식':['간식','후식','디저트']
+  }
+};
+
+const QUICK = ['간편','간단','빠른','후딱','금방','쉬운'];
+
+// 코퍼스에 등장하는 주재료 목록 (긴 이름 우선 매칭)
+let MAIN_INDEX = [];
+
+function parseQuery(q){
+  const want = { main:[], flavor:[], type:null, cuisine:null, situation:[], maxTime:null };
+  if (!q) return want;
+
+  MAIN_INDEX.forEach(m => { if (q.includes(m)) want.main.push(m) });
+  Object.entries(SYN).forEach(([k,vs]) => {
+    if (k.length >= 2 && q.includes(k)) vs.forEach(v => { if (MAIN_INDEX.includes(v) && !want.main.includes(v)) want.main.push(v) });
+  });
+
+  for (const [tag, words] of Object.entries(VOCAB.flavor))
+    if (words.some(w => q.includes(w))) want.flavor.push(tag);
+  for (const [tag, words] of Object.entries(VOCAB.situation))
+    if (words.some(w => q.includes(w))) want.situation.push(tag);
+  for (const [tag, words] of Object.entries(VOCAB.type))
+    if (!want.type && words.some(w => q.includes(w))) want.type = tag;
+  for (const [tag, words] of Object.entries(VOCAB.cuisine))
+    if (!want.cuisine && words.some(w => q.includes(w))) want.cuisine = tag;
+
+  const m = q.match(/(\d+)\s*분/);
+  if (m) want.maxTime = +m[1];
+  else if (QUICK.some(w => q.includes(w))) want.maxTime = 15;
+
+  return want;
+}
+
+function score(r, want){
+  let s = 0;
+  want.main.forEach(m => {
+    if (r.main.includes(m)) s += 10;
+    else if (r.ingredients.some(i => i.name.includes(m))) s += 5;
+  });
+  want.flavor.forEach(f => { if (r.flavor.includes(f)) s += 6 });
+  want.situation.forEach(x => { if (r.situation.includes(x)) s += 5 });
+  if (want.type && r.type === want.type) s += 5;
+  if (want.cuisine && r.cuisine === want.cuisine) s += 5;
+  if (want.maxTime && r.time <= want.maxTime) s += 4;
+  s += stockHits(r) * 1.2;          // 재고는 제약이 아니라 가산점
+  return s;
+}
+
+function matchCuisine(r){
+  if (state.cuisine === '자유') return true;
+  if (state.cuisine === '기타') return !NAMED_CUISINE.includes(r.cuisine);
+  return r.cuisine === state.cuisine;
+}
+function matchSituation(r){
+  if (state.situation === '자유') return true;
+  if (state.situation === '기타') return !r.situation.some(x => NAMED_SITUATION.includes(x));
+  return r.situation.includes(state.situation);
+}
+const matchChips = r => matchCuisine(r) && matchSituation(r);
+
+// 자연어에서 건진 조건이 하나라도 있는가
+const understood = w =>
+  w.main.length || w.flavor.length || w.type || w.cuisine || w.situation.length || w.maxTime;
+
+// 재고 가산점을 뺀 순수 요청 부합도 — 0이면 요청과 무관한 요리다
+const fitScore = (r, want) => score(r, want) - stockHits(r) * 1.2;
+
+// 추천은 절대 비지 않는다.
+// 조건을 한 단계씩 풀어가며 5개를 채우고, 1단계로 못 채웠으면 안내를 남긴다.
+function pick(n = 5){
+  const want = parseQuery(state.query);
+  const asked = !!state.query;
+  const got   = understood(want);
+  const fits  = r => !got || fitScore(r, want) > 0;
+
+  // 위에서부터 조건이 느슨해진다
+  const tiers = [
+    r => matchChips(r) && fits(r),                              // 칩 + 자연어
+    r => matchChips(r),                                         // 칩만
+    r => (matchCuisine(r) || matchSituation(r)) && fits(r),     // 칩 한쪽 + 자연어
+    r => matchCuisine(r) || matchSituation(r),                  // 칩 한쪽
+    r => fits(r),                                               // 자연어만
+    () => true                                                  // 전부
+  ];
+
+  const rank = list => list
+    .map(r => ({ r, s: score(r, want) + Math.random() * (asked && got ? 0.8 : 2.6) }))
+    .sort((a,b) => b.s - a.s)
+    .map(x => x.r);
+
+  const out = [];
+  let firstTierFilled = false;
+  tiers.forEach((pass, i) => {
+    if (out.length >= n) return;
+    const add = rank(RECIPES.filter(r => pass(r) && !out.includes(r)));
+    if (i === 0 && add.length >= n) firstTierFilled = true;
+    out.push(...add.slice(0, n - out.length));
+  });
+
+  // 못 알아들은 요청은 1단계가 다 차더라도 알려준다 (전부 통과시킨 것뿐이므로)
+  state.notice =
+      asked && !got   ? '무슨 요리인지 몰라서 비슷한 걸로 골라봤어요'
+    : firstTierFilled ? null
+    :                   '딱 맞는 요리가 없어 비슷한 걸로 채웠어요';
+
+  return out.slice(0, n);
+}
+
+/* ─────────────────────────────────────────
+   렌더링
+───────────────────────────────────────── */
+const $ = id => document.getElementById(id);
+
+function tab(name){
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('on', p.id === name));
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  document.querySelectorAll('.scroll').forEach(s => s.scrollTop = 0);
+}
+
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function renderChips(){
+  const build = (el, list, key) => {
+    el.innerHTML = list.map(v =>
+      `<span class="chip${state[key] === v ? ' on' : ''}" data-key="${key}" data-v="${v}">${v}</span>`
+    ).join('');
+    // 고른 칩이 줄 밖으로 밀려 잘리지 않게 가로 스크롤을 맞춘다
+    const on = el.querySelector('.chip.on');
+    if (!on) return;
+    const left = on.offsetLeft, right = left + on.offsetWidth;
+    if (left < el.scrollLeft) el.scrollLeft = Math.max(0, left - 8);
+    else if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth + 8;
+  };
+  build($('chipsCuisine'), CUISINES, 'cuisine');
+  build($('chipsSituation'), SITUATIONS, 'situation');
+}
+
+function renderCards(){
+  const picked = [
+    state.cuisine   !== '자유' ? state.cuisine   : null,
+    state.situation !== '자유' ? state.situation : null
+  ].filter(Boolean);
+  const parts = [];
+  if (picked.length) parts.push(picked.join(' · '));
+  if (state.query) parts.push(`"${state.query}"`);
+  $('askLabel').textContent = parts.length ? parts.join(' ') + ' 추천' : '오늘의 추천';
+  $('askClear').hidden = !parts.length;
+  $('notice').hidden = !state.notice;
+  if (state.notice) $('notice').textContent = state.notice;
+  $('cards').innerHTML = state.shown.map(r => `
+    <div class="card" data-id="${r.id}">
+      <h3>${r.name}</h3>
+      <div class="meta"><span>${r.time}분</span><span>${r.calories}kcal</span></div>
+      <span class="tag">${r.cuisine}</span>
+    </div>`).join('');
+}
+
+function renderStock(){
+  const list = $('stockList');
+  if (!state.stock.length){
+    list.innerHTML = `<div class="empty">냉장고가 텅 비었어요.<br>위에 재료를 적어 채워 주세요.</div>`;
+    return;
+  }
+  list.innerHTML = state.stock.map(n => `
+    <div class="item"><span>${n}</span><span class="del" data-name="${n}">×</span></div>
+  `).join('');
+}
+
+function renderRecipe(){
+  const r = state.current;
+  const body = $('recipeBody');
+  if (!r){
+    body.innerHTML = `<div class="empty">아직 고른 요리가 없어요.<br>홈에서 마음에 드는 카드를 눌러 주세요.</div>`;
+    return;
+  }
+  const liked = state.favs.some(f => f.id === r.id);
+  const yt = `https://www.youtube.com/results?search_query=${encodeURIComponent(r.name + ' 레시피')}`;
+  const n = r.nutrition;
+
+  body.innerHTML = `
+    <div class="rwrap">
+      <div class="rhead">
+        <h2>${r.name}</h2>
+        <button class="heart" id="like">${liked ? '♥' : '♡'}</button>
+      </div>
+      <div class="rmeta">
+        ${r.time}분 · ${r.servings}인분 · ${r.calories}kcal<br>
+        탄수 ${n.carb}g / 단백 ${n.protein}g / 지방 ${n.fat}g
+      </div>
+
+      <div class="rule"></div>
+      <div class="rlabel">재료</div>
+      <div class="ings">
+        ${r.ingredients.map(i => {
+          const has = inStock(i.name);
+          return `<div class="ing ${has ? 'have' : 'miss'}">
+            <span class="dot">${has ? '●' : '○'}</span><span>${i.name} ${i.amount}</span>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div class="rule"></div>
+      <div class="rlabel">조리 순서</div>
+      <div class="steps">
+        ${r.steps.map((s, i) => `<div class="step"><b>${i + 1}</b><span>${s}</span></div>`).join('')}
+      </div>
+
+      <div class="rule"></div>
+      <div class="rlabel">참고 영상</div>
+      <a class="ytbtn" href="${yt}" target="_blank" rel="noopener">
+        <span class="play">▶</span><span>유튜브에서 "${r.name}" 영상 보기</span>
+      </a>
+    </div>`;
+
+  $('like').onclick = toggleFav;
+}
+
+function renderFavs(){
+  const list = $('favList');
+  if (!state.favs.length){
+    list.innerHTML = `<div class="empty">아직 담아둔 레시피가 없어요.<br>레시피 화면에서 ♡ 를 눌러 보세요.</div>`;
+    return;
+  }
+  list.innerHTML = [...state.favs].reverse().map(r => `
+    <div class="fav" data-id="${r.id}">
+      <span><b>${r.name}</b><em>${r.time}분 · ${r.calories}kcal</em></span>
+      <button class="heart" data-un="${r.id}">♥</button>
+    </div>`).join('');
+}
+
+/* ─────────────────────────────────────────
+   동작
+───────────────────────────────────────── */
+function openRecipe(id){
+  // 즐겨찾기에 저장된 사본이 있으면 그것을, 없으면 원본을 연다.
+  state.current = state.favs.find(f => f.id === id) || RECIPES.find(r => r.id === id);
+  renderRecipe();     // ●/○ 는 매번 현재 재고로 다시 판정된다
+  tab('recipe');
+}
+
+function toggleFav(){
+  const r = state.current;
+  if (!r) return;
+  const i = state.favs.findIndex(f => f.id === r.id);
+  if (i >= 0) state.favs.splice(i, 1);
+  else state.favs.push(JSON.parse(JSON.stringify(r)));   // 레시피 내용을 통째로 저장
+  save(LS.favs, state.favs);
+  renderRecipe();
+  renderFavs();
+}
+
+function addStock(){
+  const input = $('stockInput');
+  const v = input.value.trim();
+  if (!v) return;
+  if (state.stock.includes(v)){
+    toast('이미 등록된 재료입니다');
+    input.value = '';
+    return;
+  }
+  state.stock.push(v);
+  state.stock.sort((a, b) => a.localeCompare(b, 'ko'));
+  save(LS.stock, state.stock);
+  input.value = '';
+  renderStock();
+}
+
+/* ─────────────────────────────────────────
+   이벤트
+───────────────────────────────────────── */
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => tab(b.dataset.tab));
+
+$('cards').onclick = e => {
+  const c = e.target.closest('.card');
+  if (c) openRecipe(c.dataset.id);
+};
+
+// 자연어 입력 — 추천 목록만 갈아끼운다. 레시피 탭으로 넘어가지 않는다.
+$('ask').addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  e.target.blur();
+  state.query = e.target.value.trim();
+  state.shown = pick();
+  renderCards();
+});
+$('askClear').onclick = () => {
+  state.query = '';
+  state.cuisine = '자유';
+  state.situation = '자유';
+  $('ask').value = '';
+  renderChips();
+  state.shown = pick();
+  renderCards();
+};
+
+// 칩을 누르면 그 자리에서 추천이 다시 뽑힌다
+$('home').addEventListener('click', e => {
+  const c = e.target.closest('.chip');
+  if (!c) return;
+  state[c.dataset.key] = c.dataset.v;
+  renderChips();
+  state.shown = pick();
+  renderCards();
+});
+
+// 재고 변경은 여기서야 반영된다
+$('again').onclick = () => { state.shown = pick(); renderCards() };
+
+$('stockAdd').onclick = addStock;
+$('stockInput').addEventListener('keydown', e => { if (e.key === 'Enter') addStock() });
+
+$('stockList').onclick = e => {
+  const d = e.target.closest('.del');
+  if (!d) return;
+  state.pending = d.dataset.name;
+  $('dlgName').textContent = state.pending;
+  $('dlgJosa').textContent = josa(state.pending, '을', '를');
+  $('dim').classList.add('show');
+};
+$('dlgCancel').onclick = () => { $('dim').classList.remove('show'); state.pending = null };
+$('dlgOk').onclick = () => {
+  state.stock = state.stock.filter(x => x !== state.pending);
+  save(LS.stock, state.stock);
+  renderStock();
+  if (state.current) renderRecipe();
+  $('dim').classList.remove('show');
+  state.pending = null;
+};
+
+$('favList').onclick = e => {
+  const un = e.target.closest('[data-un]');
+  if (un){
+    state.favs = state.favs.filter(f => f.id !== un.dataset.un);
+    save(LS.favs, state.favs);
+    renderFavs();
+    if (state.current) renderRecipe();
+    return;
+  }
+  const f = e.target.closest('.fav');
+  if (f) openRecipe(f.dataset.id);
+};
+
+/* ─────────────────────────────────────────
+   기동
+───────────────────────────────────────── */
+function boot(data){
+  RECIPES = data;
+  MAIN_INDEX = [...new Set(RECIPES.flatMap(r => r.main))]
+    .filter(m => m.length >= 2)          // 1글자 재료는 오탐이 많아 자연어 매칭에서 제외
+    .sort((a, b) => b.length - a.length);
+  renderChips();
+  state.shown = pick();
+  renderCards();
+  renderStock();
+  renderRecipe();
+  renderFavs();
+}
+
+// 단일 파일 미리보기에서는 RECIPES_INLINE 이 먼저 주입된다.
+if (typeof RECIPES_INLINE !== 'undefined') boot(RECIPES_INLINE);
+else fetch('recipes.json').then(r => r.json()).then(boot).catch(() => {
+  $('cards').innerHTML = `<div class="empty">레시피를 불러오지 못했습니다.</div>`;
+});
+
+// 홈 화면에 설치된 뒤에도 새 내용을 받아 오도록 등록해 둔다
+if ('serviceWorker' in navigator)
+  window.addEventListener('load', () =>
+    navigator.serviceWorker.register('./sw.js').catch(() => {}));
+</script>
+</body>
+</html>
