@@ -139,6 +139,7 @@
       font-family:inherit;font-size:12.5px;font-weight:500;color:var(--green);cursor:pointer;
     }
     .again:active{background:var(--green-tint)}
+    .rcount{text-align:center;font-size:10px;font-weight:300;color:var(--ink-faint);padding:0 16px 22px}
 
     /* ── 냉장고 ── */
     .items{padding:4px 0 24px}
@@ -259,6 +260,7 @@
       <div class="notice" id="notice" hidden></div>
       <div class="cards" id="cards"></div>
       <button class="again" id="again">⟳ 다시 추천</button>
+      <div class="rcount" id="rcount"></div>
     </div>
   </section>
 
@@ -727,6 +729,7 @@ function boot(data){
   MAIN_INDEX = [...new Set(RECIPES.flatMap(r => r.main))]
     .filter(m => m.length >= 2)          // 1글자 재료는 오탐이 많아 자연어 매칭에서 제외
     .sort((a, b) => b.length - a.length);
+  $('rcount').textContent = `레시피 ${RECIPES.length}개`;
   renderChips();
   state.shown = pick();
   renderCards();
