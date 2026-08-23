@@ -229,6 +229,21 @@
     }
     .dialog .cancel{border:1px solid var(--line);background:var(--surface);color:var(--ink-soft)}
     .dialog .ok{border:none;background:var(--omija);color:#fff}
+    /* 재료 이름 제안 — 폐기가 아니므로 오미자색을 쓰지 않는다 */
+    .dialog .guess{
+      display:flex;flex-direction:column;gap:7px;margin-top:16px;
+    }
+    .dialog .guess button{
+      width:100%;padding:12px 0;border:1px solid var(--line);border-radius:10px;
+      background:var(--surface);font-family:'Gowun Batang',serif;font-size:15px;
+      font-weight:700;color:var(--green);cursor:pointer;
+    }
+    .dialog .guess button:active{background:var(--green-tint)}
+    .dialog .nope{
+      margin-top:14px;font-size:12px;color:var(--ink-faint);
+      background:none;border:none;font-family:inherit;cursor:pointer;
+      text-decoration:underline;padding:4px;
+    }
 
     /* ── 토스트 ── */
     .toast{
@@ -305,6 +320,14 @@
     </div>
   </div>
 
+  <div class="dim" id="guessDim">
+    <div class="dialog">
+      <p><b id="guessTyped"></b><span id="guessJosa">은</span> 아직 모르는 재료예요.<br>혹시 이건가요?</p>
+      <div class="guess" id="guessList"></div>
+      <button class="nope" id="guessNope">아니에요, 적은 그대로 담기</button>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -333,7 +356,8 @@ const state = {
   query: '',        // 현재 자연어 조건
   notice: null,     // 조건을 못 채웠을 때 띄우는 안내
   current: null,    // 레시피 탭에 열린 요리
-  pending: null     // 폐기 확인 대기 항목
+  pending: null,    // 폐기 확인 대기 항목
+  typed: null       // 사전에 없어 되물어보는 중인 입력
 };
 
 // 받침 유무에 따라 조사를 고른다 (대파를 / 묵은지를 / 달걀을)
@@ -345,17 +369,132 @@ function josa(w, withBatchim, without){
 
 /* ─────────────────────────────────────────
    재료 매칭
-───────────────────────────────────────── */
-const SYN = { '계란':['달걀'], '달걀':['계란'], '파':['대파'], '돼지':['돼지고기'], '소고기':['쇠고기'] };
-const expand = w => [w, ...(SYN[w] || [])];
 
-// 재고 항목명이 재료명에 포함되면 보유. 1글자 재고는 완전일치만.
-function inStock(name){
-  return state.stock.some(s =>
-    expand(s).some(t => t.length === 1 ? name === t : name.includes(t))
-  );
+   이름이 포함되면 보유로 치던 방식은 "고추"가 "고추장"을, "기름"이
+   "엿기름"을 잡고 "김치"는 "묵은지"를 놓쳤다. 이름은 계층을 뜻하지
+   않는다. 그래서 ingredients.json 에 재고 항목마다 자기가 충족하는
+   레시피 재료명(covers)을 적어 두고 그것만 본다.
+───────────────────────────────────────── */
+let DICT = [];                  // 재료 사전
+const byName  = new Map();      // 표시명 → 항목
+const byAlias = new Map();      // 별칭   → 항목
+let PANTRY = new Set();         // 조미료로 분류된 레시피 재료명
+let COVERED = new Set();        // 지금 재고가 충족하는 레시피 재료명
+
+function indexDict(){
+  byName.clear(); byAlias.clear(); PANTRY = new Set();
+  DICT.forEach(it => {
+    byName.set(it.name, it);
+    (it.aliases || []).forEach(a => byAlias.set(a, it));
+    if (it.pantry) it.covers.forEach(c => PANTRY.add(c));
+  });
 }
-const stockHits = r => r.ingredients.filter(i => inStock(i.name)).length;
+
+// 재고가 바뀔 때마다 한 번만 펼쳐 둔다 (레시피마다 사전을 뒤지지 않도록)
+function recomputeCovered(){
+  COVERED = new Set();
+  state.stock.forEach(n => {
+    const it = byName.get(n);
+    if (it) it.covers.forEach(c => COVERED.add(c));
+    else COVERED.add(n);        // 사전에 없는 옛 항목은 이름 그대로 둔다
+  });
+}
+
+const inStock = name => COVERED.has(name);
+
+// 조미료는 뺀다. 간장·설탕·식용유가 100개 넘는 레시피에 들어 있어서
+// 점수에 넣으면 거의 모든 요리가 똑같이 가산점을 받아 의미가 없어진다.
+const stockHits = r =>
+  r.ingredients.filter(i => !PANTRY.has(i.name) && inStock(i.name)).length;
+
+/* ── 입력 해석 ──────────────────────────────
+   표시명·별칭에 그대로 걸리면 바로 담고, 아니면 닮은 이름을 제안한다.
+   한글 오타는 글자가 아니라 자모에서 갈리므로("브로콜리"↔"브로컬리")
+   자모로 풀어 놓고 견준다.
+──────────────────────────────────────────── */
+const CHO  = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const JUNG = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+const JONG = ' ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ';
+
+function jamo(s){
+  let out = '';
+  for (const ch of s){
+    const c = ch.charCodeAt(0) - 0xAC00;
+    if (c >= 0 && c < 11172){
+      out += CHO[(c / 588) | 0] + JUNG[((c % 588) / 28) | 0];
+      const j = c % 28;
+      if (j) out += JONG[j];
+    } else out += ch;
+  }
+  return out;
+}
+
+function editDist(a, b){
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = Array.from({length: n + 1}, (_, j) => j);
+  for (let i = 1; i <= m; i++){
+    const cur = [i];
+    for (let j = 1; j <= n; j++){
+      cur[j] = Math.min(
+        prev[j] + 1,
+        cur[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+function similarity(a, b){
+  const x = jamo(a), y = jamo(b);
+  if (!x.length || !y.length) return 0;
+  return 1 - editDist(x, y) / Math.max(x.length, y.length);
+}
+
+// 용량·개수는 무시한다 ("돼지고기 300g" → "돼지고기")
+const tidy = s => s
+  .replace(/\([^)]*\)/g, '')
+  .replace(/[\d.]+\s*(g|kg|ml|l|리터|개|봉|팩|알|장|근|마리|인분|컵|큰술|작은술)?/gi, '')
+  .replace(/\s+/g, '')
+  .trim();
+
+// 그대로 알아들으면 항목을, 아니면 null
+function resolve(raw){
+  const q = tidy(raw);
+  if (!q) return null;
+  return byName.get(q) || byAlias.get(q) ||
+         byName.get(raw.trim()) || byAlias.get(raw.trim()) || null;
+}
+
+// 낱자만 두드린 입력("ㅁㄴㅇㄹ")은 자모로 풀면 짧은 재료와 우연히 닮는다.
+// 온전한 글자가 하나도 없으면 재료로 보지 않는다.
+const onlyJamo = s => /^[ㄱ-ㅣ]+$/.test(s);
+
+// 닮은 이름 최대 3개. 표시명으로 돌려준다
+function suggest(raw, n = 3){
+  const q = tidy(raw);
+  if (!q || onlyJamo(q)) return [];
+  const best = new Map();               // 표시명 → 가장 높은 점수
+  const put = (name, s) => {
+    if (s > (best.get(name) ?? 0)) best.set(name, s);
+  };
+  DICT.forEach(it => {
+    put(it.name, similarity(q, it.name));
+    (it.aliases || []).forEach(a => put(it.name, similarity(q, a)));
+  });
+  // 오타는 진짜 짝이 0.85 언저리, 엉뚱한 것은 0.67 아래로 갈린다.
+  // 그래서 절대 점수만 보지 않고 1등에 가까운 것만 남긴다 —
+  // "브로컬리"에 블루베리까지 같이 보여 주면 오히려 헷갈린다.
+  const ranked = [...best.entries()]
+    .filter(([, s]) => s >= 0.62)
+    .sort((a, b) => b[1] - a[1]);
+  if (!ranked.length) return [];
+  const cut = ranked[0][1] - 0.15;
+  return ranked.filter(([, s]) => s >= cut).slice(0, n).map(([name]) => name);
+}
 
 /* ─────────────────────────────────────────
    자연어 해석
@@ -392,8 +531,12 @@ function parseQuery(q){
   if (!q) return want;
 
   MAIN_INDEX.forEach(m => { if (q.includes(m)) want.main.push(m) });
-  Object.entries(SYN).forEach(([k,vs]) => {
-    if (k.length >= 2 && q.includes(k)) vs.forEach(v => { if (MAIN_INDEX.includes(v) && !want.main.includes(v)) want.main.push(v) });
+
+  // 사전의 별칭으로 적어도 알아듣는다 ("계란 요리" → 달걀)
+  DICT.forEach(it => {
+    if (!MAIN_INDEX.includes(it.name) || want.main.includes(it.name)) return;
+    if ((it.aliases || []).some(a => a.length >= 2 && q.includes(a)))
+      want.main.push(it.name);
   });
 
   // 1글자 키워드는 다른 낱말 속에 우연히 끼어 오탐을 내므로 뺀다
@@ -642,20 +785,52 @@ function toggleFav(){
   renderFavs();
 }
 
-function addStock(){
-  const input = $('stockInput');
-  const v = input.value.trim();
-  if (!v) return;
-  if (state.stock.includes(v)){
+// 실제로 목록에 넣는 부분. 이름은 이미 정해진 상태로 들어온다.
+function putStock(name){
+  if (state.stock.includes(name)){
     toast('이미 등록된 재료입니다');
-    input.value = '';
     return;
   }
-  state.stock.push(v);
+  state.stock.push(name);
   state.stock.sort((a, b) => a.localeCompare(b, 'ko'));
   save(LS.stock, state.stock);
-  input.value = '';
+  recomputeCovered();
   renderStock();
+  if (state.current) renderRecipe();
+}
+
+function closeGuess(){
+  $('guessDim').classList.remove('show');
+  state.typed = null;
+}
+
+// 사전에 있으면 바로 담고, 닮은 이름이 있으면 물어보고, 둘 다 아니면
+// 적은 그대로 담는다. 어느 쪽이든 입력창은 비운다.
+function addStock(){
+  const input = $('stockInput');
+  const raw = input.value.trim();
+  if (!raw) return;
+  input.value = '';
+
+  const hit = resolve(raw);
+  if (hit){
+    if (hit.name !== raw) toast(`${hit.name}${josa(hit.name, '으로', '로')} 담았어요`);
+    putStock(hit.name);
+    return;
+  }
+
+  const guesses = suggest(raw);
+  if (!guesses.length){
+    putStock(raw);
+    return;
+  }
+
+  state.typed = raw;
+  $('guessTyped').textContent = raw;
+  $('guessJosa').textContent = josa(raw, '은', '는');
+  $('guessList').innerHTML = guesses
+    .map(g => `<button data-pick="${g}">${g}</button>`).join('');
+  $('guessDim').classList.add('show');
 }
 
 /* ─────────────────────────────────────────
@@ -715,11 +890,26 @@ $('dlgCancel').onclick = () => { $('dim').classList.remove('show'); state.pendin
 $('dlgOk').onclick = () => {
   state.stock = state.stock.filter(x => x !== state.pending);
   save(LS.stock, state.stock);
+  recomputeCovered();
   renderStock();
   if (state.current) renderRecipe();
   $('dim').classList.remove('show');
   state.pending = null;
 };
+
+$('guessList').onclick = e => {
+  const b = e.target.closest('[data-pick]');
+  if (!b) return;
+  const name = b.dataset.pick;
+  closeGuess();
+  putStock(name);
+};
+$('guessNope').onclick = () => {
+  const raw = state.typed;
+  closeGuess();
+  if (raw) putStock(raw);
+};
+$('guessDim').onclick = e => { if (e.target === $('guessDim')) closeGuess() };
 
 $('favList').onclick = e => {
   const un = e.target.closest('[data-un]');
@@ -737,8 +927,29 @@ $('favList').onclick = e => {
 /* ─────────────────────────────────────────
    기동
 ───────────────────────────────────────── */
-function boot(data){
+// 예전에 자유롭게 적어 둔 재고를 사전의 표시명으로 옮긴다.
+// 알아듣지 못하는 것은 지우지 않고 그대로 둔다.
+function migrateStock(){
+  const out = [];
+  state.stock.forEach(n => {
+    const hit = resolve(n);
+    const name = hit ? hit.name : n;
+    if (!out.includes(name)) out.push(name);
+  });
+  const changed = out.length !== state.stock.length ||
+                  out.some((n, i) => n !== state.stock[i]);
+  if (changed){
+    state.stock = out.sort((a, b) => a.localeCompare(b, 'ko'));
+    save(LS.stock, state.stock);
+  }
+}
+
+function boot(data, dict){
   RECIPES = data;
+  DICT = dict || [];
+  indexDict();
+  migrateStock();
+  recomputeCovered();
   MAIN_INDEX = [...new Set(RECIPES.flatMap(r => r.main))]
     .filter(m => m.length >= 2)          // 1글자 재료는 오탐이 많아 자연어 매칭에서 제외
     .sort((a, b) => b.length - a.length);
@@ -752,10 +963,16 @@ function boot(data){
 }
 
 // 단일 파일 미리보기에서는 RECIPES_INLINE 이 먼저 주입된다.
-if (typeof RECIPES_INLINE !== 'undefined') boot(RECIPES_INLINE);
-else fetch('recipes.json').then(r => r.json()).then(boot).catch(() => {
-  $('cards').innerHTML = `<div class="empty">레시피를 불러오지 못했습니다.</div>`;
-});
+if (typeof RECIPES_INLINE !== 'undefined')
+  boot(RECIPES_INLINE, typeof INGREDIENTS_INLINE !== 'undefined' ? INGREDIENTS_INLINE : []);
+else
+  Promise.all([
+    fetch('recipes.json').then(r => r.json()),
+    // 사전을 못 받아도 레시피만으로 돌아간다 (매칭만 예전처럼 느슨해진다)
+    fetch('ingredients.json').then(r => r.json()).catch(() => [])
+  ]).then(([recipes, dict]) => boot(recipes, dict)).catch(() => {
+    $('cards').innerHTML = `<div class="empty">레시피를 불러오지 못했습니다.</div>`;
+  });
 
 // 홈 화면에 설치된 뒤에도 새 내용을 받아 오도록 등록해 둔다
 if ('serviceWorker' in navigator)

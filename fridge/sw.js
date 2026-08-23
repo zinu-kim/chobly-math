@@ -2,7 +2,7 @@
 // 앱 껍데기와 레시피를 캐시에 담아 두고, 뒤에서 조용히 새 버전을 받아 둔다.
 // 레시피를 새로 푸시하면 다음 실행 때 반영된다.
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL   = `haya-fridge-shell-${VERSION}`;
 const FONTS   = 'haya-fridge-fonts';
 
@@ -11,6 +11,7 @@ const ASSETS = [
   './index.html',
   './manifest.json',
   './recipes.json',
+  './ingredients.json',
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
