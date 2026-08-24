@@ -322,9 +322,9 @@
 
   <div class="dim" id="guessDim">
     <div class="dialog">
-      <p><b id="guessTyped"></b><span id="guessJosa">은</span> 아직 모르는 재료예요.<br>혹시 이건가요?</p>
+      <p><b id="guessTyped"></b><span id="guessJosa">은</span><br><span id="guessAsk"></span></p>
       <div class="guess" id="guessList"></div>
-      <button class="nope" id="guessNope">아니에요, 적은 그대로 담기</button>
+      <button class="nope" id="guessNope"></button>
     </div>
   </div>
 
@@ -376,6 +376,7 @@ function josa(w, withBatchim, without){
    레시피 재료명(covers)을 적어 두고 그것만 본다.
 ───────────────────────────────────────── */
 let DICT = [];                  // 재료 사전
+let AMBIGUOUS = {};             // "치즈"처럼 하나로 못 정하는 말 → 선택지
 const byName  = new Map();      // 표시명 → 항목
 const byAlias = new Map();      // 별칭   → 항목
 let PANTRY = new Set();         // 조미료로 분류된 레시피 재료명
@@ -461,10 +462,16 @@ const tidy = s => s
   .replace(/\s+/g, '')
   .trim();
 
-// 그대로 알아들으면 항목을, 아니면 null
+// 갈림말이면 선택지를, 아니면 빈 배열
+function ambiguousPicks(raw){
+  const q = tidy(raw);
+  return AMBIGUOUS[q] || AMBIGUOUS[raw.trim()] || [];
+}
+
+// 그대로 알아들으면 항목을, 아니면 null. 갈림말은 되물어야 하므로 null.
 function resolve(raw){
   const q = tidy(raw);
-  if (!q) return null;
+  if (!q || ambiguousPicks(raw).length) return null;
   return byName.get(q) || byAlias.get(q) ||
          byName.get(raw.trim()) || byAlias.get(raw.trim()) || null;
 }
@@ -819,15 +826,25 @@ function addStock(){
     return;
   }
 
-  const guesses = suggest(raw);
+  // "치즈"처럼 여러 개를 가리키는 말은 모른다고 하지 않고 고르게 한다
+  const picks = ambiguousPicks(raw);
+  const guesses = picks.length ? picks : suggest(raw);
   if (!guesses.length){
     putStock(raw);
     return;
   }
 
-  state.typed = raw;
+  // 갈림말을 그대로 담으면 어느 레시피와도 안 맞는 항목이 남는다.
+  // 그래서 이때는 "그대로 담기" 대신 그냥 물러나게 한다.
+  state.typed = picks.length ? null : raw;
   $('guessTyped').textContent = raw;
   $('guessJosa').textContent = josa(raw, '은', '는');
+  $('guessAsk').textContent = picks.length
+    ? '어느 쪽인가요?'
+    : '아직 모르는 재료예요. 혹시 이건가요?';
+  $('guessNope').textContent = picks.length
+    ? '나중에 고를게요'
+    : '아니에요, 적은 그대로 담기';
   $('guessList').innerHTML = guesses
     .map(g => `<button data-pick="${g}">${g}</button>`).join('');
   $('guessDim').classList.add('show');
@@ -946,7 +963,8 @@ function migrateStock(){
 
 function boot(data, dict){
   RECIPES = data;
-  DICT = dict || [];
+  DICT      = (dict && dict.items) || [];
+  AMBIGUOUS = (dict && dict.ambiguous) || {};
   indexDict();
   migrateStock();
   recomputeCovered();
@@ -964,12 +982,12 @@ function boot(data, dict){
 
 // 단일 파일 미리보기에서는 RECIPES_INLINE 이 먼저 주입된다.
 if (typeof RECIPES_INLINE !== 'undefined')
-  boot(RECIPES_INLINE, typeof INGREDIENTS_INLINE !== 'undefined' ? INGREDIENTS_INLINE : []);
+  boot(RECIPES_INLINE, typeof INGREDIENTS_INLINE !== 'undefined' ? INGREDIENTS_INLINE : null);
 else
   Promise.all([
     fetch('recipes.json').then(r => r.json()),
-    // 사전을 못 받아도 레시피만으로 돌아간다 (매칭만 예전처럼 느슨해진다)
-    fetch('ingredients.json').then(r => r.json()).catch(() => [])
+    // 사전을 못 받아도 레시피만으로 돌아간다 (재고 매칭만 이름 그대로가 된다)
+    fetch('ingredients.json').then(r => r.json()).catch(() => null)
   ]).then(([recipes, dict]) => boot(recipes, dict)).catch(() => {
     $('cards').innerHTML = `<div class="empty">레시피를 불러오지 못했습니다.</div>`;
   });

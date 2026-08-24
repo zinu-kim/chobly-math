@@ -225,7 +225,7 @@ GROUPED = [
     ('버터', ['버터'], ['가염버터', '무염버터']),
     ('플레인 요거트', ['플레인 요거트'], ['요거트', '요구르트', '그릭요거트']),
     ('모짜렐라 치즈', ['모짜렐라 치즈'], ['모짜렐라', '피자치즈', '슈레드치즈']),
-    ('체다치즈', ['체다치즈'], ['체다', '슬라이스치즈', '치즈']),
+    ('체다치즈', ['체다치즈'], ['체다', '슬라이스치즈']),
     ('파르메산 치즈', ['파르메산 치즈'], ['파마산', '파르미지아노', '파마산치즈']),
     ('크림치즈', ['크림치즈'], []),
     ('페타 치즈', ['페타 치즈'], ['페타']),
@@ -326,6 +326,17 @@ GROUPED = [
     ('메이플시럽', ['메이플시럽'], ['메이플']),
 ]
 
+# ── 하나로 정할 수 없는 말 ───────────────────────────────────
+# "치즈"라고만 적으면 모짜렐라인지 체다인지 알 수 없다. 한쪽으로 몰래
+# 정해 버리면 나머지는 영영 안 잡히므로, 이런 말은 되물어서 고르게 한다.
+AMBIGUOUS = [
+    ('치즈',  ['모짜렐라 치즈', '체다치즈']),
+    ('고기',  ['돼지고기', '소고기', '닭고기']),
+    ('와인',  ['레드와인', '화이트와인']),
+    ('젓갈',  ['새우젓', '명란젓', '오징어젓']),
+    ('육수',  ['멸치육수', '다시육수']),
+]
+
 # ── 늘 있다고 보는 조미료 ────────────────────────────────────
 # 재고에 넣을 수는 있지만 추천 점수에는 넣지 않는다. 간장·설탕·식용유가
 # 100개 넘는 레시피에 들어 있어서, 점수에 넣으면 거의 모든 요리가 똑같이
@@ -407,13 +418,30 @@ def build():
                 raise SystemExit(1)
             alias_owner[a] = it['name']
 
+    ambiguous = {}
+    for word, picks in AMBIGUOUS:
+        if word in seen_names:
+            print(f'!! "{word}" 는 이미 표시명이라 되물을 수 없다', file=sys.stderr)
+            raise SystemExit(1)
+        if word in alias_owner:
+            print(f'!! "{word}" 가 {alias_owner[word]} 의 별칭이면서 갈림말이다',
+                  file=sys.stderr)
+            raise SystemExit(1)
+        unknown = [p for p in picks if p not in seen_names]
+        if unknown:
+            print(f'!! "{word}" 의 선택지에 없는 항목: {unknown}', file=sys.stderr)
+            raise SystemExit(1)
+        ambiguous[word] = picks
+
     items.sort(key=lambda x: x['name'])
     with open(OUT, 'w', encoding='utf-8') as f:
-        json.dump(items, f, ensure_ascii=False, separators=(',', ':'))
+        json.dump({'items': items, 'ambiguous': ambiguous},
+                  f, ensure_ascii=False, separators=(',', ':'))
 
     pantry_n = sum(1 for i in items if i.get('pantry'))
     alias_n  = sum(len(i.get('aliases', [])) for i in items)
     print(f'재고 항목 {len(items)}종 (조미료 {pantry_n}종) / 별칭 {alias_n}개')
+    print(f'되물을 갈림말 {len(ambiguous)}개: {", ".join(ambiguous)}')
     print(f'레시피 재료 {len(used)}종 전부 덮음')
 
 
